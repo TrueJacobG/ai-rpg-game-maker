@@ -495,3 +495,93 @@ select {
   display: grid;
   gap: 0.4rem;
 }
+
+.dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 60rem) {
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+.editor {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.editor label {
+  display: grid;
+  gap: 0.2rem;
+  color: var(--muted);
+}
+
+.editor input,
+.editor textarea {
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--muted);
+  background: #0f131d;
+  color: var(--fg);
+  font: inherit;
+}
+
+.character-list,
+.device-list,
+.history {
+  display: grid;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.device-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pairing-code {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 0.3em;
+}
+
+.player-link {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
+}
+
+.qr {
+  width: 12rem;
+  height: 12rem;
+  border-radius: 0.5rem;
+}
+
+.player-link .url {
+  margin: 0;
+  word-break: break-all;
+  color: var(--muted);
+}
+
+.dice-total {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 900;
+}
+
+.die {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.4rem;
+  background: #0f131d;
+  border: 1px solid var(--muted);
+}

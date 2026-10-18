@@ -24,7 +24,7 @@ const hpSchema = z
     ctx.addIssue({ code: 'custom', path: ['current'], message: 'Current hp exceeds max hp' });
   });
 
-const characterSchema = z.strictObject({
+export const characterSchema = z.strictObject({
   name: z.string().min(1).max(100),
   attributes: z.record(keySchema, z.number().int()),
   skills: z.record(keySchema, z.number().int()),

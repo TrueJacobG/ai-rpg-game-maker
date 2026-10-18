@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
+import { CharactersPanel } from './CharactersPanel';
+import { DicePanel } from './DicePanel';
 import { LoginForm } from './LoginForm';
 import { TableControl } from './TableControl';
+import { TabletPanel } from './TabletPanel';
 
 type Session = 'checking' | 'in' | 'out';
 
@@ -28,7 +31,14 @@ export const MasterApp = () => {
           Log out
         </button>
       </div>
-      <TableControl />
+      <div className="dashboard">
+        <TableControl />
+        <aside>
+          <TabletPanel />
+          <CharactersPanel />
+          <DicePanel />
+        </aside>
+      </div>
     </main>
   );
 };

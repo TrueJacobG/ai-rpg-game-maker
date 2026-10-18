@@ -11,7 +11,8 @@
     "./character": "./src/character.ts",
     "./parse": "./src/parse.ts",
     "./session": "./src/session.ts",
-    "./realtime": "./src/realtime.ts"
+    "./realtime": "./src/realtime.ts",
+    "./api": "./src/api.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
