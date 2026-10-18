@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { quickCheck } from './quickRoll';
 
 const rngOf = (...values: number[]) => {
-  const queue = [...values];
+  let index = 0;
   return () => {
-    const next = queue.shift();
+    const next = values[index];
     if (next === undefined) throw new Error('rng exhausted');
+    index += 1;
     return next;
   };
 };

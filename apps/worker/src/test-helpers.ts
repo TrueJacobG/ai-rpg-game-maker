@@ -20,10 +20,16 @@ export const useAiProvider = (provider: AiProvider | null): void => {
   aiProvider = provider;
 };
 
-const queuedRandoms: number[] = [];
+let queuedRandoms: readonly number[] = [];
 
 export const queueCodes = (...codes: number[]): void => {
-  queuedRandoms.push(...codes.map((code) => (code + 0.5) / 1_000_000));
+  queuedRandoms = [...queuedRandoms, ...codes.map((code) => (code + 0.5) / 1_000_000)];
+};
+
+const nextRandom = (): number => {
+  const [next, ...rest] = queuedRandoms;
+  queuedRandoms = rest;
+  return next ?? secureRng();
 };
 
 type CallOptions = { cookie?: string; body?: unknown; rawBody?: string };
@@ -35,7 +41,7 @@ export const harness = (start = START) => {
   const clock = { now: start };
   const app = createApp({
     now: () => clock.now,
-    rng: () => queuedRandoms.shift() ?? secureRng(),
+    rng: nextRandom,
     createAi: () => aiProvider,
   });
 

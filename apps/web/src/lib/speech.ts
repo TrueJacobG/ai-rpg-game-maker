@@ -56,7 +56,10 @@ export const useSpeech = ({ active, lang, onText }: SpeechOptions) => {
 
       recognition.onresult = (event) => {
         const session = Array.from(event.results, (result) => result[0]?.transcript ?? '').join('');
-        latest = [carry, session].filter(Boolean).join(' ').trim();
+        latest = [carry, session]
+          .filter((part) => part !== '')
+          .join(' ')
+          .trim();
         setError(null);
         onTextRef.current(latest);
       };

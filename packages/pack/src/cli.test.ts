@@ -32,19 +32,22 @@ const run = async (
   files: Record<string, string> | Error,
   options: { replies?: (Reply | Error)[]; password?: string } = {},
 ) => {
-  const lines: string[] = [];
-  const calls: Call[] = [];
-  const replies = [...(options.replies ?? [])];
+  let lines: readonly string[] = [];
+  let calls: readonly Call[] = [];
+  let replies = options.replies ?? [];
   const code = await runCli(args, {
     readDirectory: () => {
       if (files instanceof Error) throw files;
       return files;
     },
-    print: (line) => lines.push(line),
+    print: (line) => {
+      lines = [...lines, line];
+    },
     readPassword: async () => options.password ?? 'correct horse battery staple',
     fetch: async (url, init) => {
-      calls.push({ url: String(url), init: init ?? {} });
-      const next = replies.shift();
+      calls = [...calls, { url: String(url), init: init ?? {} }];
+      const [next, ...rest] = replies;
+      replies = rest;
       if (next === undefined) throw new Error('unexpected request');
       if (next instanceof Error) throw next;
       return reply(next);

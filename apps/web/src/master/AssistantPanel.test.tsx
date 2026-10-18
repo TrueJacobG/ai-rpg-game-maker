@@ -11,20 +11,21 @@ const answer = {
   usage: { inputTokens: 120, outputTokens: 80, cacheReadTokens: 40_000, cacheWriteTokens: 0 },
 };
 
+let received: unknown[] = [];
+
 const captureRequest = () => {
-  const received: unknown[] = [];
+  received = [];
   server.use(
     http.post('/api/master/ai', async ({ request }) => {
-      received.push(await request.json());
+      received = [...received, await request.json()];
       return HttpResponse.json(answer);
     }),
   );
-  return received;
 };
 
 describe('AssistantPanel', () => {
   it('suggests the next beat, with an optional note, and shows the answer and token use', async () => {
-    const received = captureRequest();
+    captureRequest();
     const user = userEvent.setup();
     render(<AssistantPanel />);
 
@@ -41,7 +42,7 @@ describe('AssistantPanel', () => {
   });
 
   it('asks for the next beat without a note', async () => {
-    const received = captureRequest();
+    captureRequest();
     const user = userEvent.setup();
     render(<AssistantPanel />);
 
@@ -52,7 +53,7 @@ describe('AssistantPanel', () => {
   });
 
   it('writes a bridge scene for what the players did', async () => {
-    const received = captureRequest();
+    captureRequest();
     const user = userEvent.setup();
     render(<AssistantPanel />);
 
@@ -66,7 +67,7 @@ describe('AssistantPanel', () => {
   });
 
   it('generates the chosen kind of thing from a brief', async () => {
-    const received = captureRequest();
+    captureRequest();
     const user = userEvent.setup();
     render(<AssistantPanel />);
 
@@ -82,7 +83,7 @@ describe('AssistantPanel', () => {
   });
 
   it('writes a recap from the log without any input', async () => {
-    const received = captureRequest();
+    captureRequest();
     const user = userEvent.setup();
     render(<AssistantPanel />);
 
@@ -95,7 +96,7 @@ describe('AssistantPanel', () => {
   });
 
   it('answers questions about the canon', async () => {
-    const received = captureRequest();
+    captureRequest();
     const user = userEvent.setup();
     render(<AssistantPanel />);
 

@@ -2,7 +2,7 @@
 
 An open-source framework for running a tabletop RPG as the game master, built for Cloudflare Workers. You bring the world and the story, the framework brings dice, character tracking, a live session screen for the table, and an AI that helps you follow your own plot.
 
-> **Status: work in progress.** Nothing is built yet. The design lives in [docs/](docs/README.md) and changes often.
+> **Status: work in progress.** The table loop, characters, world packs and the AI assistant work and are covered by tests, but nothing has been played on real devices yet. See [docs/roadmap.md](docs/roadmap.md).
 
 ## What it is
 

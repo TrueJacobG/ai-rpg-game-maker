@@ -64,8 +64,12 @@ describe('parseCharacter', () => {
 
   it('allows 200 items but not 201', () => {
     const item = { name: 'Ration', description: '', tags: [] };
-    expect(parseCharacter(changed({ items: Array(200).fill(item) })).status).toBe('success');
-    expect(parseCharacter(changed({ items: Array(201).fill(item) })).status).toBe('error');
+    expect(parseCharacter(changed({ items: Array.from({ length: 200 }, () => item) })).status).toBe(
+      'success',
+    );
+    expect(parseCharacter(changed({ items: Array.from({ length: 201 }, () => item) })).status).toBe(
+      'error',
+    );
   });
 
   it('rejects an empty secret', () => {

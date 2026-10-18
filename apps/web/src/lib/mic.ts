@@ -4,7 +4,7 @@ export type MicState = 'unknown' | 'granted' | 'prompt' | 'denied';
 
 const queryMicState = async (): Promise<MicState> => {
   try {
-    const status = await navigator.permissions?.query({ name: 'microphone' as PermissionName });
+    const status = await navigator.permissions?.query({ name: 'microphone' });
     return status?.state ?? 'unknown';
   } catch {
     return 'unknown';
