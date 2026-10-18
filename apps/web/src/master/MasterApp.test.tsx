@@ -103,6 +103,7 @@ describe('MasterApp', () => {
     expect(await screen.findByTestId('character-new')).toBeInTheDocument();
     expect(screen.getByTestId('dice-roll')).toBeInTheDocument();
     expect(screen.getByTestId('ai-ask')).toBeInTheDocument();
+    expect(await screen.findByTestId('party-empty')).toBeInTheDocument();
     expect(await screen.findByTestId('log-empty')).toBeInTheDocument();
   });
 

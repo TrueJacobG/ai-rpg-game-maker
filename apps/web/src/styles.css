@@ -627,3 +627,32 @@ select {
   color: var(--fg);
   font: inherit;
 }
+
+.party {
+  display: grid;
+  gap: 0.6rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.party li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.3rem 0.8rem;
+  align-items: center;
+}
+
+.party .name {
+  font-weight: 700;
+}
+
+.party .hp {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.party .row {
+  grid-column: 1 / -1;
+}

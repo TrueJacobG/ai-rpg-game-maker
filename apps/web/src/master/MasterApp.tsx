@@ -3,6 +3,7 @@ import { AssistantPanel } from './AssistantPanel';
 import { CharactersPanel } from './CharactersPanel';
 import { DicePanel } from './DicePanel';
 import { LoginForm } from './LoginForm';
+import { PartyPanel } from './PartyPanel';
 import { StoryLogPanel } from './StoryLogPanel';
 import { TableControl } from './TableControl';
 import { TabletPanel } from './TabletPanel';
@@ -38,6 +39,7 @@ export const MasterApp = () => {
         <aside>
           <AssistantPanel />
           <StoryLogPanel />
+          <PartyPanel />
           <TabletPanel />
           <CharactersPanel />
           <DicePanel />
