@@ -304,3 +304,111 @@ select {
   align-items: center;
   gap: 0.6rem;
 }
+
+.player {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 4rem 1rem 2rem;
+}
+
+.phase-chip {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 5;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 2px solid var(--accent);
+  background: rgb(11 13 18 / 0.9);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.phase-chip[data-phase="answer"] {
+  border-color: var(--danger);
+}
+
+.sheet h1 {
+  margin: 0 0 0.75rem;
+}
+
+.sheet h2 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hp-bar {
+  height: 0.9rem;
+  border-radius: 999px;
+  background: #1c2230;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  background: var(--ok);
+}
+
+.hp {
+  margin: 0.4rem 0 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stats li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.6rem;
+  background: #141824;
+}
+
+.cards,
+.secrets {
+  display: grid;
+  gap: 0.6rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cards li,
+.secrets li {
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.6rem;
+  background: #141824;
+}
+
+.cards p {
+  margin: 0.2rem 0;
+  color: var(--muted);
+}
+
+.tags em {
+  margin-right: 0.4rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--muted);
+  font-size: 0.8rem;
+  font-style: normal;
+}
+
+.sheet button {
+  padding: 0.6rem 1rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--muted);
+  background: #141824;
+  color: var(--fg);
+}
