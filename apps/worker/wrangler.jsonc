@@ -3,5 +3,12 @@
   "name": "ai-rpg-game-maker",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ai-rpg-game-maker",
+      "migrations_dir": "migrations"
+    }
+  ]
 }

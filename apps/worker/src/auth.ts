@@ -1,6 +1,7 @@
-import type { Context } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 import { deleteCookie, getSignedCookie, setSignedCookie } from 'hono/cookie';
 import type { AppTypes } from './env';
+import { problem } from './http';
 
 export const SESSION_TTL_SECONDS = 12 * 60 * 60;
 const SESSION_TTL_MS = SESSION_TTL_SECONDS * 1000;
@@ -34,7 +35,7 @@ export const endMasterSession = (c: AuthContext): void => {
   deleteCookie(c, COOKIE_NAME, cookieOptions);
 };
 
-export const hasMasterSession = async (c: AuthContext, now: number): Promise<boolean> => {
+const hasMasterSession = async (c: AuthContext, now: number): Promise<boolean> => {
   const issuedAt = await getSignedCookie(
     c,
     c.get('config').SESSION_SECRET,
@@ -45,3 +46,10 @@ export const hasMasterSession = async (c: AuthContext, now: number): Promise<boo
   const age = now - Number(issuedAt);
   return Number.isFinite(age) && age < SESSION_TTL_MS;
 };
+
+export const requireMaster =
+  (now: () => number): MiddlewareHandler<AppTypes> =>
+  async (c, next) => {
+    if (!(await hasMasterSession(c, now()))) return problem(401, 'Not authenticated');
+    await next();
+  };

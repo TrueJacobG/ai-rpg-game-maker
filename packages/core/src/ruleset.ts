@@ -1,14 +1,15 @@
 import { z } from 'zod';
-import { failure, type Result, success } from './result';
+import { type ParseIssue, parseWith } from './parse';
+import type { Result } from './result';
 
-const key = z.string().regex(/^[a-z][a-z0-9_]*$/, 'Use lowercase letters, digits and underscores');
+export const keySchema = z
+  .string()
+  .regex(/^[a-z][a-z0-9_]*$/, 'Use lowercase letters, digits and underscores');
 const label = z.string().min(1);
 
-const attributeSchema = z.strictObject({ key, label });
-const skillSchema = z.strictObject({ key, label, attribute: key });
-const difficultySchema = z.strictObject({ key, label, target: z.number().int().min(1) });
-
-export type RulesetIssue = { path: string; message: string };
+const attributeSchema = z.strictObject({ key: keySchema, label });
+const skillSchema = z.strictObject({ key: keySchema, label, attribute: keySchema });
+const difficultySchema = z.strictObject({ key: keySchema, label, target: z.number().int().min(1) });
 
 const addDuplicateKeyIssues = (
   entries: readonly { key: string }[],
@@ -52,10 +53,5 @@ const rulesetSchema = z
 
 export type Ruleset = z.infer<typeof rulesetSchema>;
 
-export const parseRuleset = (input: unknown): Result<Ruleset, RulesetIssue[]> => {
-  const parsed = rulesetSchema.safeParse(input);
-  if (parsed.success) return success(parsed.data);
-  return failure(
-    parsed.error.issues.map((issue) => ({ path: issue.path.join('.'), message: issue.message })),
-  );
-};
+export const parseRuleset = (input: unknown): Result<Ruleset, ParseIssue[]> =>
+  parseWith(rulesetSchema, input);
