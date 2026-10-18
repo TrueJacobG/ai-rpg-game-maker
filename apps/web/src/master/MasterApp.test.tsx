@@ -11,7 +11,13 @@ const signedIn = () =>
 const signedOut = () =>
   server.use(http.get('/api/master/me', () => new HttpResponse(null, { status: 401 })));
 
-beforeEach(() => FakeWebSocket.install());
+beforeEach(() => {
+  FakeWebSocket.install();
+  server.use(
+    http.get('/api/master/characters', () => HttpResponse.json([])),
+    http.get('/api/master/prompter/devices', () => HttpResponse.json([])),
+  );
+});
 
 describe('MasterApp', () => {
   it('asks for the password when there is no session', async () => {
@@ -86,6 +92,14 @@ describe('MasterApp', () => {
     render(<MasterApp />);
     await waitFor(() => expect(FakeWebSocket.instances).toHaveLength(1));
     expect(FakeWebSocket.latest.url).toContain('/api/master/ws');
+  });
+
+  it('shows the tablet, characters and dice next to the table', async () => {
+    signedIn();
+    render(<MasterApp />);
+    expect(await screen.findByTestId('pairing-create')).toBeInTheDocument();
+    expect(await screen.findByTestId('character-new')).toBeInTheDocument();
+    expect(screen.getByTestId('dice-roll')).toBeInTheDocument();
   });
 
   it('logs out and returns to the password form', async () => {

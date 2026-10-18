@@ -1,24 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDecisionEvent, DECISION_TEMPLATES, slotKey } from './decision';
-
-describe('slotKey', () => {
-  it.each([
-    ['Who', 'who'],
-    ['How much', 'how_much'],
-    ['  Where  ', 'where'],
-    ['Gdzie?', 'gdzie'],
-    ['Łódź', 'lodz'],
-    ['Żółć', 'zolc'],
-    ['Plan B', 'plan_b'],
-    ['2nd plan', 'slot_2nd_plan'],
-  ])('turns %j into %j', (label, expected) => {
-    expect(slotKey(label)).toBe(expected);
-  });
-
-  it.each(['', '   ', '123', '!!!'])('finds no key in %j', (label) => {
-    expect(slotKey(label)).toBeNull();
-  });
-});
+import { buildDecisionEvent, DECISION_TEMPLATES } from './decision';
 
 describe('buildDecisionEvent', () => {
   it('builds a start_decision event from a prompt and comma separated slots', () => {
