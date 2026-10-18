@@ -176,6 +176,28 @@ describe('PrompterApp session', () => {
     expect(FakeRecognition.latest.lang).toBe('pl-PL');
   });
 
+  it('warns when the browser cannot keep the screen awake', async () => {
+    paired();
+    render(<PrompterApp />);
+    const socket = await connectedSocket();
+    act(() => socket.receive({ type: 'state', view: { phase: 'listen', scene: null } }));
+
+    expect(await screen.findByTestId('wake-warning')).toBeInTheDocument();
+  });
+
+  it('does not warn when the screen is kept awake', async () => {
+    paired();
+    stubNavigator({
+      wakeLock: { request: vi.fn().mockResolvedValue({ released: false, release: vi.fn() }) },
+    });
+    render(<PrompterApp />);
+    const socket = await connectedSocket();
+    act(() => socket.receive({ type: 'state', view: { phase: 'listen', scene: null } }));
+
+    await screen.findByTestId('prompter-controls');
+    expect(screen.queryByTestId('wake-warning')).not.toBeInTheDocument();
+  });
+
   it('hides the controls while the players are answering', async () => {
     paired();
     render(<PrompterApp />);
