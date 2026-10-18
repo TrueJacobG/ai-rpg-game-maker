@@ -12,7 +12,8 @@
     "./parse": "./src/parse.ts",
     "./session": "./src/session.ts",
     "./realtime": "./src/realtime.ts",
-    "./api": "./src/api.ts"
+    "./api": "./src/api.ts",
+    "./pack": "./src/pack.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

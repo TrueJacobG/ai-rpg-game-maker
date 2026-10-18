@@ -1,0 +1,10 @@
+name: Kira Voss
+attributes: { body: 1, reflex: 3, mind: 2, presence: 0 }
+skills: { firearms: 2, stealth: 1 }
+hp: { current: 10, max: 10 }
+items:
+  - { name: Pulse pistol, description: Standard corporate sidearm, tags: [weapon, ranged] }
+abilities:
+  - { name: Overclock, description: Reroll one failed hacking check per scene }
+secrets:
+  - She sold her old crew to Helix Dynamics to clear her own debt.

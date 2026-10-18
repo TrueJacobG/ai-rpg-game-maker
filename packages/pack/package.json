@@ -1,0 +1,24 @@
+{
+  "name": "@ai-rpg/pack",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./read": "./src/read.ts",
+    "./files": "./src/files.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@vitest/coverage-v8": "^4.1.12",
+    "tsx": "^4.23.15",
+    "vitest": "^4.1.12"
+  },
+  "dependencies": {
+    "@ai-rpg/core": "*",
+    "yaml": "^2.9.1"
+  }
+}
