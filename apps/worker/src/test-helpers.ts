@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { secureRng } from '@ai-rpg/core/dice';
+import type { AiProvider } from './ai-provider';
 import { createApp } from './app';
 
 export const START = 1_800_000_000_000;
@@ -11,6 +12,12 @@ const bindings = {
   DB: env.DB,
   MASTER_PASSWORD: PASSWORD,
   SESSION_SECRET: 's'.repeat(40),
+};
+
+let aiProvider: AiProvider | null = null;
+
+export const useAiProvider = (provider: AiProvider | null): void => {
+  aiProvider = provider;
 };
 
 const queuedRandoms: number[] = [];
@@ -26,7 +33,11 @@ const hasBody = (options: CallOptions): boolean =>
 
 export const harness = (start = START) => {
   const clock = { now: start };
-  const app = createApp({ now: () => clock.now, rng: () => queuedRandoms.shift() ?? secureRng() });
+  const app = createApp({
+    now: () => clock.now,
+    rng: () => queuedRandoms.shift() ?? secureRng(),
+    createAi: () => aiProvider,
+  });
 
   const call = (method: string, path: string, options: CallOptions = {}) =>
     app.request(

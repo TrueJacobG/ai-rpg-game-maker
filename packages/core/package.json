@@ -13,7 +13,9 @@
     "./session": "./src/session.ts",
     "./realtime": "./src/realtime.ts",
     "./api": "./src/api.ts",
-    "./pack": "./src/pack.ts"
+    "./pack": "./src/pack.ts",
+    "./ai": "./src/ai.ts",
+    "./log": "./src/log.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

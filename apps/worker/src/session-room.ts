@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { type LogDraft, logEntryFor } from '@ai-rpg/core/log';
 import {
   canSend,
   parseClientMessage,
@@ -12,6 +13,7 @@ import {
   type SessionState,
   transition,
 } from '@ai-rpg/core/session';
+import { createStoryLogRepository } from './story-log-repository';
 
 const STATE_KEY = 'state';
 const ROLES = ['master', 'prompter', 'player'] as const satisfies readonly Role[];
@@ -29,7 +31,9 @@ const parseJson = (text: string): unknown => {
 
 const send = (ws: WebSocket, message: ServerMessage): void => ws.send(JSON.stringify(message));
 
-type Outcome = { kind: 'reply'; message: ServerMessage } | { kind: 'update'; state: SessionState };
+type Outcome =
+  | { kind: 'reply'; message: ServerMessage }
+  | { kind: 'update'; state: SessionState; log: LogDraft | null };
 
 const rejected = (code: Extract<ServerMessage, { type: 'error' }>['code']): Outcome => ({
   kind: 'reply',
@@ -45,10 +49,10 @@ const handleMessage = (role: Role, raw: string | ArrayBuffer, state: SessionStat
   if (!canSend(role, event.type)) return rejected('forbidden');
   const next = transition(state, event);
   if (next.status === 'error') return rejected(next.error.code);
-  return { kind: 'update', state: next.data };
+  return { kind: 'update', state: next.data, log: logEntryFor(state, event) };
 };
 
-export class SessionRoom extends DurableObject {
+export class SessionRoom extends DurableObject<Env> {
   override fetch(request: Request): Response {
     const role = toRole(new URL(request.url).searchParams.get('role'));
     if (request.headers.get('upgrade') !== 'websocket' || !role) {
@@ -61,7 +65,7 @@ export class SessionRoom extends DurableObject {
     return new Response(null, { status: 101, webSocket: pair[0] });
   }
 
-  override webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): void {
+  override async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
     const role = toRole(this.ctx.getTags(ws)[0]);
     if (!role) {
       ws.close(1008, 'unknown role');
@@ -75,6 +79,15 @@ export class SessionRoom extends DurableObject {
     }
     this.ctx.storage.kv.put(STATE_KEY, outcome.state);
     this.broadcast(outcome.state);
+    if (outcome.log) await this.record(outcome.log);
+  }
+
+  private async record(entry: LogDraft): Promise<void> {
+    try {
+      await createStoryLogRepository(this.env.DB).add({ ...entry, now: Date.now() });
+    } catch {
+      console.error('story_log_failed');
+    }
   }
 
   override webSocketClose(ws: WebSocket, code: number): void {

@@ -3,6 +3,8 @@ import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
 import { z } from 'zod';
+import { anthropicFromEnv } from './ai-config';
+import { createAiRoutes } from './ai-routes';
 import { endMasterSession, passwordMatches, requireMaster, startMasterSession } from './auth';
 import { createCharacterRoutes } from './characters';
 import { type AppDependencies, type AppTypes, parseEnv } from './env';
@@ -11,6 +13,7 @@ import { createPackRoutes } from './pack-routes';
 import { createPlayerRoutes } from './player';
 import { createPrompterAdminRoutes, createPrompterRoutes } from './prompter';
 import { connectToRoom } from './room';
+import { createStoryLogRoutes } from './story-log-routes';
 
 const LOGIN_BODY_LIMIT_BYTES = 4096;
 
@@ -61,11 +64,17 @@ const createMasterRoutes = (dependencies: AppDependencies) => {
   master.route('/characters', createCharacterRoutes(dependencies));
   master.route('/prompter', createPrompterAdminRoutes(dependencies));
   master.route('/pack', createPackRoutes(dependencies));
+  master.route('/log', createStoryLogRoutes(dependencies));
+  master.route('/ai', createAiRoutes(dependencies));
 
   return master;
 };
 
-export const createApp = ({ now = Date.now, rng = secureRng }: Partial<AppDependencies> = {}) => {
+export const createApp = ({
+  now = Date.now,
+  rng = secureRng,
+  createAi = anthropicFromEnv,
+}: Partial<AppDependencies> = {}) => {
   const app = new Hono<AppTypes>();
   app.use(secureHeaders());
   app.use('/api/*', async (c, next) => {
@@ -73,8 +82,8 @@ export const createApp = ({ now = Date.now, rng = secureRng }: Partial<AppDepend
     c.header('cache-control', 'no-store');
   });
   app.get('/api/health', (c) => c.json({ status: 'ok' }));
-  app.route('/api/master', createMasterRoutes({ now, rng }));
+  app.route('/api/master', createMasterRoutes({ now, rng, createAi }));
   app.route('/api/player', createPlayerRoutes());
-  app.route('/api/prompter', createPrompterRoutes({ now, rng }));
+  app.route('/api/prompter', createPrompterRoutes({ now, rng, createAi }));
   return app;
 };

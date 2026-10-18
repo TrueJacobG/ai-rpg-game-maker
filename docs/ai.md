@@ -1,32 +1,52 @@
 # AI
 
-**Status: WIP. Jobs and provider agreed, prompts not written.**
+**Status: WIP. The assistant works end to end; the plot-aware prompts will keep improving with real play.**
 
 The AI never changes the game on its own. It suggests, the master approves.
 
-## Jobs
+## What it does
 
-1. **Next beat.** Suggest what happens next, based on the plot graph and current state.
-2. **Bridge scenes.** When players leave the prepared path, generate a scene that fits the world and steers back toward the planned quests and endings.
-3. **Warnings.** Flag clues that are still undiscovered or an ending that is drifting out of reach.
-4. **Generation on demand.** NPCs, quests, rumors and encounters, consistent with the lore.
-5. **Recaps.** Session summary from the log.
-6. **Ask the world.** Query canon, for example "what does this faction want?".
+The master panel has an **Assistant** with five jobs. All of them send the whole world pack as context (premise, ruleset, every document with its secret flag, tags and links), so answers stay inside your canon:
 
-## Provider interface
+| Job | What you give | What you get |
+|---|---|---|
+| What next? | Optional note on what just happened | Two or three options for the next beat, each naming the quest, clue or ending it advances |
+| Bring them back | What the players did off the path | A bridge scene that follows from it and leads back to a prepared quest, clue or ending |
+| Create | NPC, quest, rumor, encounter or location, and a brief | A draft that fits the canon and names the documents it connects to |
+| Recap | Nothing (uses the story log) or pasted text | A player-facing recap that does not reveal undiscovered secrets |
+| Ask the world | A question | An answer from the canon only, citing documents |
 
-A small interface with swappable providers:
+Answers are written in the pack's language.
 
-- **Anthropic API** (default). The key is a Worker secret, billed per use.
-- **Workers AI**. Free allowance, weaker output.
+## Story log
 
-A Claude subscription (Pro or Max) does not cover API calls from your own app. The API is billed separately through the Anthropic Console.
+The assistant also reads the **story log**: notes the master types, plus entries the table writes by itself: every accepted decision (with what the players said) and every shown roll. Only the newest 20 000 characters go with a question. Clear it when a new campaign starts.
 
-## Cost estimate for one session
+## Setup
 
-Assumptions: four-hour session, about 60 AI calls, the world pack summary (about 40k tokens) sent as cached context, about 3k fresh input and 1k output per call, one recap of 30k input and 2k output.
+The AI is optional and uses Claude through the Anthropic API.
 
-Prices from the Anthropic pricing page, October 2026, per million tokens:
+```bash
+cd apps/worker
+npx wrangler secret put ANTHROPIC_API_KEY
+```
+
+The default model is `claude-opus-5-5`. To use a cheaper one, set a plain variable `AI_MODEL` (for example `claude-sonnet-5-5`) in `wrangler.jsonc` under `vars`, or as a secret.
+
+A Claude subscription (Pro or Max) does not cover API calls from your own app. The API key comes from the Anthropic Console and is billed by usage.
+
+## How it is built
+
+- `packages/core/src/ai.ts`: the job schema and the prompt builders. Pure functions, tested.
+- `apps/worker/src/ai-provider.ts`: a small provider interface with the Anthropic implementation. The world goes in a cached system block (one hour) that is byte-identical between questions, so repeated questions read it from the cache at a fraction of the price. Effort is set to `medium`. Server-side refusal fallback is on, so a request the model declines (a hacking scene can trip the cyber classifier) is retried on a fallback model instead of failing.
+- `apps/worker/src/ai-routes.ts`: `POST /api/master/ai`.
+- Errors the master sees: no pack imported, key missing or rejected, request declined, AI busy.
+
+## Cost of one session
+
+Assumptions: four hours, about 60 questions, a world of about 40k tokens read from the cache, about 3k fresh input and 1k output per question, one recap.
+
+Prices from the Anthropic pricing page (October 2026), per million tokens:
 
 | Model | Input | Cache read | Output |
 |---|---|---|---|
@@ -38,6 +58,12 @@ Prices from the Anthropic pricing page, October 2026, per million tokens:
 |---|---|
 | Haiku 5.5 | about $0.10 to $0.20 |
 | Sonnet 5.5 | about $1 to $2 |
-| Opus 5.5 | about $2 to $4 |
+| Opus 5.5 (default) | about $2 to $4 |
 
-These are estimates. Real numbers come once the prompts exist, and the app should show token use per session.
+Each answer shows its token use (input, output, cached) under the text, so you can see the real numbers.
+
+## Not built yet
+
+- Plot state tracking (which clues were found) beyond the log.
+- Using Workers AI as a free provider.
+- Letting the AI auto-tick decision slots.

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  parseAiAnswer,
   parseCharacterList,
   parseCreatedCharacter,
   parseDevices,
+  parseLogEntries,
   parsePairing,
   parseStoredCharacter,
   parseTokenResponse,
@@ -78,5 +80,23 @@ describe('small responses', () => {
     expect(parseDevices(devices)).toEqual({ status: 'success', data: devices });
     expect(parseDevices([{ id: 'x', createdAt: 'y' }]).status).toBe('error');
     expect(parseDevices([]).status).toBe('success');
+  });
+});
+
+describe('assistant and log responses', () => {
+  const usage = { inputTokens: 1, outputTokens: 2, cacheReadTokens: 3, cacheWriteTokens: 4 };
+
+  it('parses an assistant answer', () => {
+    const answer = { text: 'Opcja pierwsza.', model: 'claude-opus-5-5', usage };
+    expect(parseAiAnswer(answer)).toEqual({ status: 'success', data: answer });
+    expect(parseAiAnswer({ ...answer, usage: { inputTokens: 1 } }).status).toBe('error');
+    expect(parseAiAnswer({ text: 'x' }).status).toBe('error');
+  });
+
+  it('parses log entries', () => {
+    const entries = [{ id: 'a', at: '2026-10-18T12:00:00.000Z', kind: 'decision', text: 'x' }];
+    expect(parseLogEntries(entries)).toEqual({ status: 'success', data: entries });
+    expect(parseLogEntries([{ ...entries[0], kind: 'gossip' }]).status).toBe('error');
+    expect(parseLogEntries([]).status).toBe('success');
   });
 });

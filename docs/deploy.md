@@ -52,7 +52,15 @@ Changing `SESSION_SECRET` logs the master out everywhere.
 - Tablet: open `<your address>/prompter` in Chrome, press "Pair a tablet" on the master panel and enter the code. Speech recognition needs https, which `workers.dev` provides.
 - Phones: save a character in the master panel and let each player scan their QR code.
 
-## 6. Import your story
+## 6. Optional: turn on the AI
+
+```bash
+npx wrangler secret put ANTHROPIC_API_KEY
+```
+
+Paste an API key from the Anthropic Console. See [ai.md](ai.md) for cost and model choice.
+
+## 7. Import your story
 
 ```bash
 npm run pack:check -- story

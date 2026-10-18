@@ -16,6 +16,7 @@ beforeEach(() => {
   server.use(
     http.get('/api/master/characters', () => HttpResponse.json([])),
     http.get('/api/master/prompter/devices', () => HttpResponse.json([])),
+    http.get('/api/master/log', () => HttpResponse.json([])),
   );
 });
 
@@ -100,6 +101,8 @@ describe('MasterApp', () => {
     expect(await screen.findByTestId('pairing-create')).toBeInTheDocument();
     expect(await screen.findByTestId('character-new')).toBeInTheDocument();
     expect(screen.getByTestId('dice-roll')).toBeInTheDocument();
+    expect(screen.getByTestId('ai-ask')).toBeInTheDocument();
+    expect(await screen.findByTestId('log-empty')).toBeInTheDocument();
   });
 
   it('logs out and returns to the password form', async () => {
