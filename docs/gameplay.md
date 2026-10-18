@@ -30,6 +30,8 @@ The prompter always shows the current phase as a corner icon, so everyone knows 
 | Roll | Dice are being rolled and the result is shown. |
 | Break | Pause. |
 
+Internally there is a sixth state, review: the mic is off and the master is ticking slots. The prompter shows it as Listen because the players are just waiting. The whole flow is a pure state machine in `packages/core/src/session.ts`, so the Durable Object only stores and broadcasts state.
+
 ## Microphone indicator
 
 When the mic is live the whole prompter screen must make it unmistakable, for example a full-width pulsing border and a large "LISTENING" label. This is a hard requirement.

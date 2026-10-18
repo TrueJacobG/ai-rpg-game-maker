@@ -9,7 +9,8 @@
     "./ruleset": "./src/ruleset.ts",
     "./result": "./src/result.ts",
     "./character": "./src/character.ts",
-    "./parse": "./src/parse.ts"
+    "./parse": "./src/parse.ts",
+    "./session": "./src/session.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
