@@ -28,6 +28,13 @@ describe('App', () => {
     expect(screen.getByTestId('home')).toBeInTheDocument();
   });
 
+  it('opens the master panel under /master', async () => {
+    server.use(http.get('/api/master/me', () => new HttpResponse(null, { status: 401 })));
+    window.history.pushState({}, '', '/master');
+    render(<App />);
+    expect(await screen.findByTestId('login-form')).toBeInTheDocument();
+  });
+
   it('opens the prompter under /prompter', async () => {
     server.use(http.get('/api/prompter/me', () => new HttpResponse(null, { status: 401 })));
     window.history.pushState({}, '', '/prompter');
