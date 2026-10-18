@@ -13,7 +13,7 @@
 
 | Concern | Choice |
 |---|---|
-| Monorepo | pnpm workspaces, TypeScript |
+| Monorepo | npm workspaces, TypeScript, Node 26 |
 | Web app | React + Vite |
 | API | Cloudflare Worker with Hono |
 | Realtime | One Durable Object per session, WebSockets between laptop, tablet and phones |

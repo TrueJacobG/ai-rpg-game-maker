@@ -15,6 +15,15 @@ An open-source framework for running a tabletop RPG as the game master, built fo
 
 Anyone can clone this repo, drop a world pack into `story/` (git-ignored), and deploy to their own Cloudflare account. The free tiers cover a game group. See [docs/architecture.md](docs/architecture.md).
 
+## Requirements
+
+Node 26 or newer and npm. Nothing else is needed to run the tests:
+
+```bash
+npm install
+npm test
+```
+
 ## Language
 
 The UI and all code are in English. Story content can be in any language.
