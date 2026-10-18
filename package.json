@@ -1,0 +1,19 @@
+{
+  "name": "ai-rpg-game-maker",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "format": "biome format --write .",
+    "lint": "biome check .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "typescript": "6.0.3"
+  }
+}
