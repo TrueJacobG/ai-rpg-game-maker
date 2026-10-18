@@ -83,7 +83,8 @@ export const CharacterSheet = ({ character }: { character: Character }) => {
         {character.items.length === 0 && <p data-testid="items-empty">Nothing carried.</p>}
         <ul className="cards">
           {character.items.map((item, index) => (
-            <li key={`${item.name}-${index}`} data-testid={`item-${index}`}>
+            // biome-ignore lint/suspicious/noArrayIndexKey: static read-only list, items can repeat
+            <li key={index} data-testid={`item-${index}`}>
               <strong>{item.name}</strong>
               <p>{item.description}</p>
               <span className="tags">
@@ -100,7 +101,8 @@ export const CharacterSheet = ({ character }: { character: Character }) => {
         {character.abilities.length === 0 && <p data-testid="abilities-empty">No abilities.</p>}
         <ul className="cards">
           {character.abilities.map((ability, index) => (
-            <li key={`${ability.name}-${index}`} data-testid={`ability-${index}`}>
+            // biome-ignore lint/suspicious/noArrayIndexKey: static read-only list, abilities can repeat
+            <li key={index} data-testid={`ability-${index}`}>
               <strong>{ability.name}</strong>
               <p>{ability.description}</p>
             </li>

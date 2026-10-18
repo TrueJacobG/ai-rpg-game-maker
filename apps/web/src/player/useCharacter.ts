@@ -1,5 +1,5 @@
 import { type Character, parseCharacter } from '@ai-rpg/core/character';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type CharacterState =
   | { status: 'loading' }
@@ -26,12 +26,37 @@ const load = async (token: string): Promise<CharacterState> => {
   }
 };
 
-export const useCharacter = (token: string, refreshKey: string | undefined): CharacterState => {
+export const useCharacter = (token: string, phase: string | undefined): CharacterState => {
   const [state, setState] = useState<CharacterState>({ status: 'loading' });
-  const [tick, setTick] = useState(0);
+  const mounted = useRef(true);
+  const lastPhase = useRef(phase);
 
   useEffect(() => {
-    const refresh = () => setTick((current) => current + 1);
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  const refresh = useCallback(async () => {
+    const next = await load(token);
+    if (!mounted.current) return;
+    setState((previous) =>
+      next.status === 'error' && previous.status === 'ready' ? previous : next,
+    );
+  }, [token]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    if (lastPhase.current === phase) return;
+    lastPhase.current = phase;
+    refresh();
+  }, [phase, refresh]);
+
+  useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === 'visible') refresh();
     };
@@ -41,20 +66,7 @@ export const useCharacter = (token: string, refreshKey: string | undefined): Cha
       clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, []);
-
-  useEffect(() => {
-    let current = true;
-    load(token).then((next) => {
-      if (!current) return;
-      setState((previous) =>
-        next.status === 'error' && previous.status === 'ready' ? previous : next,
-      );
-    });
-    return () => {
-      current = false;
-    };
-  }, [token, refreshKey, tick]);
+  }, [refresh]);
 
   return state;
 };
