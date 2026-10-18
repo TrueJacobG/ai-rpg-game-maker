@@ -1,16 +1,7 @@
 import type { PrompterView } from '@ai-rpg/core/realtime';
 import type { RoomStatus } from '../lib/room';
 import type { SpeechError } from '../lib/speech';
-
-type Phase = PrompterView['phase'];
-
-const PHASES = {
-  listen: { label: 'LISTEN', icon: '👂', hint: 'The master is telling the story' },
-  debate: { label: 'DEBATE', icon: '💬', hint: 'Discuss it among yourselves' },
-  answer: { label: 'ANSWER', icon: '🎙️', hint: 'Say your answer out loud' },
-  roll: { label: 'ROLL', icon: '🎲', hint: 'Dice are rolling' },
-  break: { label: 'BREAK', icon: '☕', hint: 'Short break' },
-} as const satisfies Record<Phase, { label: string; icon: string; hint: string }>;
+import { PHASES, type Phase } from '../phases';
 
 type DecisionPhase = Extract<PrompterView, { phase: 'debate' | 'answer' }>;
 type RollPhase = Extract<PrompterView, { phase: 'roll' }>;
