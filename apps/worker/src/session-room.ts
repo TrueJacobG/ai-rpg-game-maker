@@ -29,6 +29,25 @@ const parseJson = (text: string): unknown => {
 
 const send = (ws: WebSocket, message: ServerMessage): void => ws.send(JSON.stringify(message));
 
+type Outcome = { kind: 'reply'; message: ServerMessage } | { kind: 'update'; state: SessionState };
+
+const rejected = (code: Extract<ServerMessage, { type: 'error' }>['code']): Outcome => ({
+  kind: 'reply',
+  message: { type: 'error', code },
+});
+
+const handleMessage = (role: Role, raw: string | ArrayBuffer, state: SessionState): Outcome => {
+  if (typeof raw !== 'string') return rejected('invalid_message');
+  const message = parseClientMessage(parseJson(raw));
+  if (message.status === 'error') return rejected('invalid_message');
+
+  const { event } = message.data;
+  if (!canSend(role, event.type)) return rejected('forbidden');
+  const next = transition(state, event);
+  if (next.status === 'error') return rejected(next.error.code);
+  return { kind: 'update', state: next.data };
+};
+
 export class SessionRoom extends DurableObject {
   override fetch(request: Request): Response {
     const role = toRole(new URL(request.url).searchParams.get('role'));
@@ -44,19 +63,18 @@ export class SessionRoom extends DurableObject {
 
   override webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): void {
     const role = toRole(this.ctx.getTags(ws)[0]);
-    if (!role) return ws.close(1008, 'unknown role');
-    if (typeof raw !== 'string') return send(ws, { type: 'error', code: 'invalid_message' });
+    if (!role) {
+      ws.close(1008, 'unknown role');
+      return;
+    }
 
-    const message = parseClientMessage(parseJson(raw));
-    if (message.status === 'error') return send(ws, { type: 'error', code: 'invalid_message' });
-    const { event } = message.data;
-    if (!canSend(role, event.type)) return send(ws, { type: 'error', code: 'forbidden' });
-
-    const next = transition(this.load(), event);
-    if (next.status === 'error') return send(ws, { type: 'error', code: next.error.code });
-
-    this.ctx.storage.kv.put(STATE_KEY, next.data);
-    this.broadcast(next.data);
+    const outcome = handleMessage(role, raw, this.load());
+    if (outcome.kind === 'reply') {
+      send(ws, outcome.message);
+      return;
+    }
+    this.ctx.storage.kv.put(STATE_KEY, outcome.state);
+    this.broadcast(outcome.state);
   }
 
   override webSocketClose(ws: WebSocket, code: number): void {
