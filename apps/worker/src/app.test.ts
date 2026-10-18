@@ -95,6 +95,13 @@ describe('POST /api/master/login', () => {
     expect(response.status).toBe(400);
   });
 
+  it('rejects a body over 4 KB', async () => {
+    const { app } = makeApp();
+    const { path, init } = jsonPost('/api/master/login', { password: 'x'.repeat(5000) });
+    const response = await app.request(path, init, env);
+    expect(response.status).toBe(413);
+  });
+
   it('answers 500 without leaking values when the environment is misconfigured', async () => {
     const { app } = makeApp();
     const { path, init } = jsonPost('/api/master/login', { password: PASSWORD });

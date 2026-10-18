@@ -14,3 +14,5 @@ coverage/
 
 story/
 .claude/settings.local.json
+
+worker-configuration.d.ts

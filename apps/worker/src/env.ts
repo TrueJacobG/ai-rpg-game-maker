@@ -9,9 +9,11 @@ const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>;
 
 export type AppTypes = {
-  Bindings: Record<string, unknown>;
+  Bindings: { DB: D1Database };
   Variables: { config: Env };
 };
+
+export type AppDependencies = { now: () => number };
 
 export const parseEnv = (raw: unknown): Result<Env, string[]> => {
   const parsed = envSchema.safeParse(raw);

@@ -7,7 +7,9 @@
     "./dice": "./src/dice.ts",
     "./check": "./src/check.ts",
     "./ruleset": "./src/ruleset.ts",
-    "./result": "./src/result.ts"
+    "./result": "./src/result.ts",
+    "./character": "./src/character.ts",
+    "./parse": "./src/parse.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
