@@ -6,7 +6,8 @@
   "exports": {
     "./dice": "./src/dice.ts",
     "./check": "./src/check.ts",
-    "./ruleset": "./src/ruleset.ts"
+    "./ruleset": "./src/ruleset.ts",
+    "./result": "./src/result.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
