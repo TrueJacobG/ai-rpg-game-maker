@@ -18,6 +18,7 @@ import {
 } from '@ai-rpg/core/api';
 import type { Character } from '@ai-rpg/core/character';
 import { failure, type Result, success } from '@ai-rpg/core/result';
+import { parseRuleset, type Ruleset } from '@ai-rpg/core/ruleset';
 
 export type ApiError = {
   code:
@@ -133,3 +134,6 @@ export const addNote = (text: string): Promise<ApiResult<undefined>> =>
 
 export const clearLog = (): Promise<ApiResult<undefined>> =>
   readNothing('DELETE', '/api/master/log');
+
+export const getRuleset = (): Promise<ApiResult<Ruleset>> =>
+  readJson('GET', '/api/master/pack/ruleset', parseRuleset);

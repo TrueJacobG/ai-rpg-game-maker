@@ -2,6 +2,7 @@ import type { CheckMode } from '@ai-rpg/core/check';
 import { secureRng } from '@ai-rpg/core/dice';
 import type { SessionEvent, SessionState } from '@ai-rpg/core/session';
 import { useState } from 'react';
+import { CheckPanel } from './CheckPanel';
 import { buildDecisionEvent, DECISION_TEMPLATES } from './decision';
 import { quickCheck } from './quickRoll';
 
@@ -120,7 +121,7 @@ const RollPanel = ({ send }: { send: Send }) => {
 
   return (
     <section className="panel">
-      <h2>Roll a d20 check</h2>
+      <h2>Roll a custom d20 check</h2>
       <input
         data-testid="roll-label-input"
         placeholder="Who rolls what"
@@ -175,6 +176,7 @@ export const ListenPanel = ({ send }: PanelProps<'listen'>) => (
   <>
     <ScenePanel send={send} />
     <DecisionPanel send={send} />
+    <CheckPanel send={send} />
     <RollPanel send={send} />
     <section className="panel">
       <button type="button" data-testid="break-start" onClick={() => send({ type: 'start_break' })}>
