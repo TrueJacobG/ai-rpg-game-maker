@@ -13,7 +13,7 @@ An open-source framework for running a tabletop RPG as the game master, built fo
 
 ## Self-hosting
 
-Anyone can clone this repo, drop a world pack into `story/` (git-ignored), and deploy to their own Cloudflare account. The free tiers cover a game group. See [docs/architecture.md](docs/architecture.md).
+Anyone can clone this repo and deploy it to their own Cloudflare account; the free tiers cover a game group. Your story lives in `story/`, which is git-ignored. Step by step: [docs/deploy.md](docs/deploy.md). Design: [docs/architecture.md](docs/architecture.md).
 
 ## Requirements
 
@@ -29,6 +29,7 @@ npm test
 Create `apps/worker/.dev.vars` from `apps/worker/.dev.vars.example` (a master password and a session secret), then run the Worker and the web app in two terminals:
 
 ```bash
+npm run migrate:local -w apps/worker
 npm run dev -w apps/worker
 npm run dev -w apps/web
 ```

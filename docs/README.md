@@ -8,4 +8,5 @@
 | [gameplay.md](gameplay.md) | Roles, access, session phases, decisions | Agreed |
 | [world-pack.md](world-pack.md) | Story separation, pack format, ruleset, plot graph | Agreed, format not final |
 | [ai.md](ai.md) | AI jobs, provider interface, cost estimate | Agreed, prompts not written |
+| [deploy.md](deploy.md) | Deploying to your own Cloudflare account | Agreed |
 | [roadmap.md](roadmap.md) | Build order and open questions | Living |
