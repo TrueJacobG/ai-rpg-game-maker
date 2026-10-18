@@ -4,21 +4,26 @@ import {
   type CharacterImport,
   type CharacterSummary,
   type CreatedCharacter,
+  type DocumentSummary,
   type LogEntry,
   type Pairing,
+  type PlotState,
   type PrompterDevice,
   parseAiAnswer,
   parseCharacterImport,
   parseCharacterList,
   parseCreatedCharacter,
   parseDevices,
+  parseDocumentList,
   parseLogEntries,
   parsePairing,
+  parsePlotState,
   parseStoredCharacter,
   parseTokenResponse,
   type StoredCharacter,
 } from '@ai-rpg/core/api';
 import type { Character } from '@ai-rpg/core/character';
+import type { PlotStatus } from '@ai-rpg/core/plot';
 import { failure, type Result, success } from '@ai-rpg/core/result';
 import { parseRuleset, type Ruleset } from '@ai-rpg/core/ruleset';
 
@@ -142,3 +147,12 @@ export const getRuleset = (): Promise<ApiResult<Ruleset>> =>
 
 export const importPackCharacters = (): Promise<ApiResult<CharacterImport>> =>
   readJson('POST', '/api/master/pack/characters', parseCharacterImport);
+
+export const listDocuments = (): Promise<ApiResult<DocumentSummary[]>> =>
+  readJson('GET', '/api/master/pack/documents', parseDocumentList);
+
+export const getPlot = (): Promise<ApiResult<PlotState>> =>
+  readJson('GET', '/api/master/plot', parsePlotState);
+
+export const setPlotStatus = (ref: string, status: PlotStatus): Promise<ApiResult<undefined>> =>
+  readNothing('PUT', `/api/master/plot/${ref}`, { status });

@@ -5,8 +5,10 @@ import {
   parseCharacterList,
   parseCreatedCharacter,
   parseDevices,
+  parseDocumentList,
   parseLogEntries,
   parsePairing,
+  parsePlotState,
   parseStoredCharacter,
   parseTokenResponse,
 } from './api';
@@ -110,5 +112,24 @@ describe('parseCharacterImport', () => {
     expect(parseCharacterImport({ created: [{ id: 'x', name: 'A' }], skipped: [] }).status).toBe(
       'error',
     );
+  });
+});
+
+describe('plot and document lists', () => {
+  it('parses the plot state', () => {
+    const state = { 'quest/a': 'resolved', 'culprit/b': 'discovered' };
+    expect(parsePlotState(state)).toEqual({ status: 'success', data: state });
+    expect(parsePlotState({}).status).toBe('success');
+    expect(parsePlotState({ 'quest/a': 'unknown' }).status).toBe('error');
+    expect(parsePlotState([]).status).toBe('error');
+  });
+
+  it('parses the document list without bodies', () => {
+    const list = [
+      { kind: 'npc', slug: 'mara', title: 'Mara', tags: [], secret: true, links: ['faction/h'] },
+    ];
+    expect(parseDocumentList(list)).toEqual({ status: 'success', data: list });
+    expect(parseDocumentList([{ ...list[0], kind: 'spell' }]).status).toBe('error');
+    expect(parseDocumentList([{ ...list[0], body: 'x' }]).status).toBe('error');
   });
 });

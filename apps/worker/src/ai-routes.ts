@@ -1,4 +1,5 @@
 import { ASSISTANT_RULES, jobPrompt, parseAiJob, worldContext } from '@ai-rpg/core/ai';
+import { plotSummary } from '@ai-rpg/core/plot';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import type { AiError } from './ai-provider';
@@ -6,6 +7,7 @@ import { requireMaster } from './auth';
 import type { AppDependencies, AppTypes } from './env';
 import { problem, readJson } from './http';
 import { createPackRepository } from './pack-repository';
+import { createPlotRepository } from './plot-repository';
 import { rateLimit } from './rate-limit';
 import { createStoryLogRepository, type LogEntry } from './story-log-repository';
 
@@ -54,7 +56,12 @@ export const createAiRoutes = (dependencies: AppDependencies) => {
       const log = logText(await createStoryLogRepository(c.env.DB).recent(LOG_ENTRIES));
       const answer = await provider.complete({
         system: `${ASSISTANT_RULES}\n\n${worldContext(bundle)}`,
-        prompt: jobPrompt(job.data, log, bundle.pack.language),
+        prompt: jobPrompt(
+          job.data,
+          log,
+          bundle.pack.language,
+          plotSummary(bundle, await createPlotRepository(c.env.DB).list()),
+        ),
         maxTokens: MAX_TOKENS,
       });
       if (answer.status === 'error') {

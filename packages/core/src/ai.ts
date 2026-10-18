@@ -71,26 +71,34 @@ export const worldContext = (bundle: PackBundle): string => {
 
 const logSection = (log: string): string => `Story log so far:\n${log === '' ? NO_LOG : log}`;
 
-const jobInstructions = (job: AiJob, log: string): string => {
+const plotSection = (plot: string): string =>
+  plot === '' ? '' : `Plot state (what the players know or have finished):\n${plot}`;
+
+const joinParts = (parts: string[]): string => parts.filter((part) => part !== '').join('\n\n');
+
+const jobInstructions = (job: AiJob, log: string, plot: string): string => {
   switch (job.type) {
     case 'next_beat':
-      return [
+      return joinParts([
         logSection(log),
+        plotSection(plot),
         job.note ? `The game master adds: ${job.note}` : '',
         'Suggest what should happen next. Give two or three options. For each: a scene idea, which prepared quest, clue or ending it advances, and what the players might do.',
-      ].join('\n\n');
+      ]);
     case 'bridge':
-      return [
+      return joinParts([
         logSection(log),
+        plotSection(plot),
         `The players did this, away from the prepared plot: ${job.situation}`,
         'Write a short bridge scene that follows from what they did, fits the world, and leads back toward a prepared quest, clue or ending. Name the one it leads to.',
-      ].join('\n\n');
+      ]);
     case 'generate':
-      return [
+      return joinParts([
         logSection(log),
+        plotSection(plot),
         `Create a new ${job.what} for the campaign: ${job.brief}`,
         'It must fit the canon. List the existing documents (kind/slug) it connects to, and mark anything secret.',
-      ].join('\n\n');
+      ]);
     case 'recap':
       return [
         job.log ? `Session log:\n${job.log}` : logSection(log),
@@ -104,5 +112,5 @@ const jobInstructions = (job: AiJob, log: string): string => {
   }
 };
 
-export const jobPrompt = (job: AiJob, log: string, language: string): string =>
-  `${jobInstructions(job, log)}\n\nAnswer in ${language}.`;
+export const jobPrompt = (job: AiJob, log: string, language: string, plot = ''): string =>
+  `${jobInstructions(job, log, plot)}\n\nAnswer in ${language}.`;

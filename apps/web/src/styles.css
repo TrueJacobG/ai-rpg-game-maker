@@ -662,3 +662,34 @@ select {
 .party .row {
   grid-column: 1 / -1;
 }
+
+.plot-group h3 {
+  margin: 0.6rem 0 0.3rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.plot {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.plot li {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.plot .secret {
+  color: var(--warn);
+  font-size: 0.8rem;
+}
+
+.plot button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+}

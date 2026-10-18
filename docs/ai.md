@@ -18,6 +18,10 @@ The master panel has an **Assistant** with five jobs. All of them send the whole
 
 Answers are written in the pack's language.
 
+## Plot state
+
+In the **Plot** panel the master marks quests, culprits, endings, people and places as *found* by the players or *done*. That list goes into every "What next?", "Bring them back" and "Create" question, so the assistant knows which clues the players already have and does not hand them out twice. Clear it with `DELETE /api/master/plot` when a new campaign starts.
+
 ## Story log
 
 The assistant also reads the **story log**: notes the master types, plus entries the table writes by itself: every accepted decision (with what the players said) and every shown roll. Only the newest 20 000 characters go with a question. Clear it when a new campaign starts.
@@ -64,6 +68,5 @@ Each answer shows its token use (input, output, cached) under the text, so you c
 
 ## Not built yet
 
-- Plot state tracking (which clues were found) beyond the log.
 - Using Workers AI as a free provider.
 - Letting the AI auto-tick decision slots.

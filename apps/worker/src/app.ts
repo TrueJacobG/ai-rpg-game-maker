@@ -11,6 +11,7 @@ import { type AppDependencies, type AppTypes, parseEnv } from './env';
 import { problem, readJson } from './http';
 import { createPackRoutes } from './pack-routes';
 import { createPlayerRoutes } from './player';
+import { createPlotRoutes } from './plot-routes';
 import { createPrompterAdminRoutes, createPrompterRoutes } from './prompter';
 import { DEFAULT_LIMITS, rateLimit } from './rate-limit';
 import { connectToRoom } from './room';
@@ -67,6 +68,7 @@ const createMasterRoutes = (dependencies: AppDependencies) => {
   master.route('/pack', createPackRoutes(dependencies));
   master.route('/log', createStoryLogRoutes(dependencies));
   master.route('/ai', createAiRoutes(dependencies));
+  master.route('/plot', createPlotRoutes(dependencies));
 
   return master;
 };

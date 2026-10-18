@@ -15,7 +15,8 @@
     "./api": "./src/api.ts",
     "./pack": "./src/pack.ts",
     "./ai": "./src/ai.ts",
-    "./log": "./src/log.ts"
+    "./log": "./src/log.ts",
+    "./plot": "./src/plot.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
