@@ -1,3 +1,4 @@
+import { secureRng } from '@ai-rpg/core/dice';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
@@ -7,6 +8,7 @@ import { createCharacterRoutes } from './characters';
 import { type AppDependencies, type AppTypes, parseEnv } from './env';
 import { problem, readJson } from './http';
 import { createPlayerRoutes } from './player';
+import { createPrompterAdminRoutes, createPrompterRoutes } from './prompter';
 
 const LOGIN_BODY_LIMIT_BYTES = 4096;
 
@@ -54,11 +56,12 @@ const createMasterRoutes = (dependencies: AppDependencies) => {
   master.get('/me', requireMaster(now), (c) => c.json({ role: 'master' }));
 
   master.route('/characters', createCharacterRoutes(dependencies));
+  master.route('/prompter', createPrompterAdminRoutes(dependencies));
 
   return master;
 };
 
-export const createApp = ({ now = Date.now }: Partial<AppDependencies> = {}) => {
+export const createApp = ({ now = Date.now, rng = secureRng }: Partial<AppDependencies> = {}) => {
   const app = new Hono<AppTypes>();
   app.use(secureHeaders());
   app.use('/api/*', async (c, next) => {
@@ -66,7 +69,8 @@ export const createApp = ({ now = Date.now }: Partial<AppDependencies> = {}) => 
     c.header('cache-control', 'no-store');
   });
   app.get('/api/health', (c) => c.json({ status: 'ok' }));
-  app.route('/api/master', createMasterRoutes({ now }));
+  app.route('/api/master', createMasterRoutes({ now, rng }));
   app.route('/api/player', createPlayerRoutes());
+  app.route('/api/prompter', createPrompterRoutes({ now, rng }));
   return app;
 };

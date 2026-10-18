@@ -5,7 +5,7 @@ import { requireMaster } from './auth';
 import { createCharacterRepository } from './characters-repository';
 import type { AppDependencies, AppTypes } from './env';
 import { problem, readJson } from './http';
-import { newPlayerToken } from './tokens';
+import { newToken } from './tokens';
 
 const MAX_BODY_BYTES = 64 * 1024;
 
@@ -42,7 +42,7 @@ export const createCharacterRoutes = ({ now }: AppDependencies) => {
     }
     const id = parseCharacterId(crypto.randomUUID());
     if (id.status === 'error') return problem(500, 'Could not create id');
-    const playerToken = newPlayerToken();
+    const playerToken = newToken();
     await repositoryOf(c).insert({
       id: id.data,
       playerToken,
@@ -75,7 +75,7 @@ export const createCharacterRoutes = ({ now }: AppDependencies) => {
   routes.post('/:id/regenerate-token', async (c) => {
     const id = idOf(c);
     if (!id) return notFound();
-    const playerToken = newPlayerToken();
+    const playerToken = newToken();
     const replaced = await repositoryOf(c).replaceToken(id, playerToken, now());
     return replaced ? c.json({ playerToken }) : notFound();
   });
