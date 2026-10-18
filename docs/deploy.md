@@ -52,6 +52,15 @@ Changing `SESSION_SECRET` logs the master out everywhere.
 - Tablet: open `<your address>/prompter` in Chrome, press "Pair a tablet" on the master panel and enter the code. Speech recognition needs https, which `workers.dev` provides.
 - Phones: save a character in the master panel and let each player scan their QR code.
 
+## 6. Import your story
+
+```bash
+npm run pack:check -- story
+npm run pack:import -- story --url https://<your address>
+```
+
+See [world-pack.md](world-pack.md) for the folder format. Run the import again whenever you change the story; it replaces the previous version.
+
 ## Updating
 
 ```bash
