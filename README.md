@@ -34,7 +34,9 @@ npm run dev -w apps/worker
 npm run dev -w apps/web
 ```
 
-Open `http://localhost:5173/prompter` for the tablet screen. The web dev server proxies `/api` and WebSockets to the Worker on port 8787.
+Open `http://localhost:5173/master` for the game master panel and `http://localhost:5173/prompter` for the tablet screen. The web dev server proxies `/api` and WebSockets to the Worker on port 8787.
+
+For your own story, validate and load a pack with `npm run pack:check -- story` and `npm run pack:import -- story --url http://localhost:8787`, see [docs/world-pack.md](docs/world-pack.md).
 
 ## Language
 
