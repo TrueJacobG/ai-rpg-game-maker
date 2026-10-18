@@ -12,6 +12,7 @@ import { problem, readJson } from './http';
 import { createPackRoutes } from './pack-routes';
 import { createPlayerRoutes } from './player';
 import { createPrompterAdminRoutes, createPrompterRoutes } from './prompter';
+import { DEFAULT_LIMITS, rateLimit } from './rate-limit';
 import { connectToRoom } from './room';
 import { createStoryLogRoutes } from './story-log-routes';
 
@@ -33,9 +34,9 @@ const createMasterRoutes = (dependencies: AppDependencies) => {
     await next();
   });
 
-  // TODO: rate limit login attempts (Workers rate limiting binding) before exposing publicly
   master.post(
     '/login',
+    rateLimit('login', dependencies),
     bodyLimit({
       maxSize: LOGIN_BODY_LIMIT_BYTES,
       onError: () => problem(413, 'Payload too large'),
@@ -74,6 +75,7 @@ export const createApp = ({
   now = Date.now,
   rng = secureRng,
   createAi = anthropicFromEnv,
+  limits = DEFAULT_LIMITS,
 }: Partial<AppDependencies> = {}) => {
   const app = new Hono<AppTypes>();
   app.use(secureHeaders());
@@ -82,8 +84,8 @@ export const createApp = ({
     c.header('cache-control', 'no-store');
   });
   app.get('/api/health', (c) => c.json({ status: 'ok' }));
-  app.route('/api/master', createMasterRoutes({ now, rng, createAi }));
+  app.route('/api/master', createMasterRoutes({ now, rng, createAi, limits }));
   app.route('/api/player', createPlayerRoutes());
-  app.route('/api/prompter', createPrompterRoutes({ now, rng, createAi }));
+  app.route('/api/prompter', createPrompterRoutes({ now, rng, createAi, limits }));
   return app;
 };

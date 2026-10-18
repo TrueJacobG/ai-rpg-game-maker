@@ -102,6 +102,7 @@ beforeEach(async () => {
   await env.DB.prepare('DELETE FROM prompter_devices').run();
   await env.DB.prepare('DELETE FROM characters').run();
   await env.DB.prepare('DELETE FROM story_log').run();
+  await env.DB.prepare('DELETE FROM rate_limits').run();
   const stub = env.ROOM.get(env.ROOM.idFromName('campaign'));
   await runInDurableObject(stub, async (_instance, state) => {
     await state.storage.deleteAll();

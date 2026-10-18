@@ -12,6 +12,8 @@
 
 One deployment has one master. The first version handles one campaign.
 
+Attempts are rate limited per network address: 10 logins and 10 pairing attempts per minute, 30 assistant questions per minute. Beyond that the server answers 429 with a `Retry-After` header. Counters live in D1.
+
 A leaked QR code exposes that player's secrets, which is why tokens can be regenerated. Tokens are 256 random bits stored as plain text in D1, so the master can show a QR code again at any time. A database leak already exposes every character, so hashing the token would add nothing.
 
 ## Player page

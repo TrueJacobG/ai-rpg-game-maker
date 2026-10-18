@@ -25,4 +25,3 @@
 - **Decisions from player phones** and per-player decisions.
 - **Plot state tracking**: which clues the players found, beyond the story log.
 - Optional free speech-to-text and AI backends on Workers AI.
-- Rate limiting on login and pairing attempts.
