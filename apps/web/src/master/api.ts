@@ -1,11 +1,16 @@
+import type { AiJob } from '@ai-rpg/core/ai';
 import {
+  type AiAnswer,
   type CharacterSummary,
   type CreatedCharacter,
+  type LogEntry,
   type Pairing,
   type PrompterDevice,
+  parseAiAnswer,
   parseCharacterList,
   parseCreatedCharacter,
   parseDevices,
+  parseLogEntries,
   parsePairing,
   parseStoredCharacter,
   parseTokenResponse,
@@ -15,7 +20,15 @@ import type { Character } from '@ai-rpg/core/character';
 import { failure, type Result, success } from '@ai-rpg/core/result';
 
 export type ApiError = {
-  code: 'unauthorized' | 'invalid' | 'not_found' | 'server' | 'network';
+  code:
+    | 'unauthorized'
+    | 'invalid'
+    | 'not_found'
+    | 'declined'
+    | 'busy'
+    | 'unavailable'
+    | 'server'
+    | 'network';
   errors?: string[];
 };
 
@@ -27,6 +40,9 @@ const STATUS_CODES: Record<number, ApiError['code']> = {
   401: 'unauthorized',
   404: 'not_found',
   413: 'invalid',
+  422: 'declined',
+  429: 'busy',
+  503: 'unavailable',
 };
 
 const issueMessages = async (response: Response): Promise<string[] | undefined> => {
@@ -105,3 +121,15 @@ export const listDevices = (): Promise<ApiResult<PrompterDevice[]>> =>
 
 export const revokeDevice = (id: string): Promise<ApiResult<undefined>> =>
   readNothing('DELETE', `/api/master/prompter/devices/${id}`);
+
+export const askAi = (job: AiJob): Promise<ApiResult<AiAnswer>> =>
+  readJson('POST', '/api/master/ai', parseAiAnswer, job);
+
+export const listLog = (): Promise<ApiResult<LogEntry[]>> =>
+  readJson('GET', '/api/master/log', parseLogEntries);
+
+export const addNote = (text: string): Promise<ApiResult<undefined>> =>
+  readNothing('POST', '/api/master/log', { text });
+
+export const clearLog = (): Promise<ApiResult<undefined>> =>
+  readNothing('DELETE', '/api/master/log');

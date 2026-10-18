@@ -1,7 +1,7 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { env, exports } from 'cloudflare:workers';
 import type { ServerMessage } from '@ai-rpg/core/realtime';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const ORIGIN = 'https://example.com';
 const PASSWORD = 'correct horse battery staple';
@@ -92,6 +92,7 @@ const connect = async (path: string, cookie?: string) => {
 beforeEach(async () => {
   await env.DB.prepare('DELETE FROM prompter_devices').run();
   await env.DB.prepare('DELETE FROM characters').run();
+  await env.DB.prepare('DELETE FROM story_log').run();
   const stub = env.ROOM.get(env.ROOM.idFromName('campaign'));
   await runInDurableObject(stub, async (_instance, state) => {
     await state.storage.deleteAll();
@@ -329,5 +330,58 @@ describe('refusing messages', () => {
 
     masterSocket.sendEvent({ type: 'retry', missing: ['when'] });
     expect(await masterSocket.next()).toEqual({ type: 'error', code: 'invalid_missing' });
+  });
+});
+
+describe('story log from the table', () => {
+  const logTexts = async (cookie: string) => {
+    const response = await exports.default.fetch(`${ORIGIN}/api/master/log`, {
+      headers: { cookie },
+    });
+    return (await response.json<{ kind: string; text: string }[]>()).map(
+      (entry) => `${entry.kind}: ${entry.text}`,
+    );
+  };
+
+  it('records accepted decisions and shown rolls', async () => {
+    const master = await masterCookie();
+    const tablet = await tabletCookie(master);
+    const masterSocket = await connect('/api/master/ws', master);
+    const prompterSocket = await connect('/api/prompter/ws', tablet);
+    await Promise.all([masterSocket.next(), prompterSocket.next()]);
+
+    masterSocket.sendEvent({ type: 'start_decision', decision });
+    masterSocket.sendEvent({ type: 'open_mic' });
+    await Promise.all([masterSocket.next(), masterSocket.next()]);
+    prompterSocket.sendEvent({ type: 'update_transcript', text: 'We run to the docks' });
+    await masterSocket.next();
+    masterSocket.sendEvent({ type: 'close_mic' });
+    masterSocket.sendEvent({ type: 'accept' });
+    masterSocket.sendEvent({
+      type: 'start_roll',
+      roll: {
+        label: 'Kira rolls Reflex',
+        result: { natural: 17, total: 20, target: 15, success: true, critical: null },
+      },
+    });
+    await Promise.all([masterSocket.next(), masterSocket.next(), masterSocket.next()]);
+
+    await vi.waitFor(async () => {
+      expect(await logTexts(master)).toEqual([
+        'decision: Decision "How do you escape?": the players said "We run to the docks"',
+        'roll: Kira rolls Reflex: 20 against 15, success',
+      ]);
+    });
+  });
+
+  it('does not log steps that carry no story', async () => {
+    const master = await masterCookie();
+    const masterSocket = await connect('/api/master/ws', master);
+    await masterSocket.next();
+    masterSocket.sendEvent({ type: 'set_scene', image: 'docks.png' });
+    masterSocket.sendEvent({ type: 'start_break' });
+    await Promise.all([masterSocket.next(), masterSocket.next()]);
+
+    expect(await logTexts(master)).toEqual([]);
   });
 });

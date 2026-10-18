@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
 
-type ProblemStatus = 400 | 401 | 404 | 413 | 500;
+type ProblemStatus = 400 | 401 | 404 | 413 | 422 | 429 | 500 | 502 | 503;
 
 export const problem = (
   status: ProblemStatus,

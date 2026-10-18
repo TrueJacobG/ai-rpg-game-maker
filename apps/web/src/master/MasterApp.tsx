@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { AssistantPanel } from './AssistantPanel';
 import { CharactersPanel } from './CharactersPanel';
 import { DicePanel } from './DicePanel';
 import { LoginForm } from './LoginForm';
+import { StoryLogPanel } from './StoryLogPanel';
 import { TableControl } from './TableControl';
 import { TabletPanel } from './TabletPanel';
 
@@ -34,6 +36,8 @@ export const MasterApp = () => {
       <div className="dashboard">
         <TableControl />
         <aside>
+          <AssistantPanel />
+          <StoryLogPanel />
           <TabletPanel />
           <CharactersPanel />
           <DicePanel />

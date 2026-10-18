@@ -585,3 +585,45 @@ select {
   background: #0f131d;
   border: 1px solid var(--muted);
 }
+
+.answer {
+  margin: 0;
+  padding: 0.8rem;
+  border-radius: 0.6rem;
+  background: #0f131d;
+  white-space: pre-wrap;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.usage {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.log {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.2rem;
+  max-height: 14rem;
+  overflow: auto;
+}
+
+.log li[data-kind="decision"] {
+  color: var(--accent);
+}
+
+.log li[data-kind="roll"] {
+  color: var(--warn);
+}
+
+.panel textarea {
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--muted);
+  background: #0f131d;
+  color: var(--fg);
+  font: inherit;
+}
