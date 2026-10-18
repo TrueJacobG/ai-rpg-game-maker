@@ -412,3 +412,86 @@ select {
   background: #141824;
   color: var(--fg);
 }
+
+.master {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.table header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.phase-chip.static,
+.connection.static {
+  position: static;
+}
+
+.panel {
+  display: grid;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 0.8rem;
+  background: #141824;
+}
+
+.panel h2 {
+  margin: 0;
+}
+
+.panel input,
+.panel select,
+.master button {
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--muted);
+  background: #0f131d;
+  color: var(--fg);
+}
+
+.master button {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.panel .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: end;
+}
+
+.panel .row label {
+  display: grid;
+  gap: 0.2rem;
+  color: var(--muted);
+}
+
+.mic-live {
+  margin: 0;
+  color: #fff;
+  background: var(--danger);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
