@@ -10,7 +10,7 @@ const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>;
 
 export type AppTypes = {
-  Bindings: { DB: D1Database };
+  Bindings: { DB: D1Database; ROOM: DurableObjectNamespace };
   Variables: { config: Env };
 };
 

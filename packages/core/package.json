@@ -10,7 +10,8 @@
     "./result": "./src/result.ts",
     "./character": "./src/character.ts",
     "./parse": "./src/parse.ts",
-    "./session": "./src/session.ts"
+    "./session": "./src/session.ts",
+    "./realtime": "./src/realtime.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

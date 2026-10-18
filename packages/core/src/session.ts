@@ -38,7 +38,7 @@ const rollViewSchema = z.strictObject({
     .nullable(),
 });
 
-const sessionEventSchema = z.discriminatedUnion('type', [
+export const sessionEventSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('set_scene'), image: z.string().min(1).max(200).nullable() }),
   z.strictObject({ type: z.literal('start_decision'), decision: decisionSchema }),
   z.strictObject({ type: z.literal('open_mic') }),
@@ -56,15 +56,36 @@ export type Decision = z.infer<typeof decisionSchema>;
 export type RollView = z.infer<typeof rollViewSchema>;
 export type SessionEvent = z.infer<typeof sessionEventSchema>;
 
-type Scene = { scene: string | null };
+const sceneSchema = z.string().min(1).max(200).nullable();
+const missingSchema = z.array(keySchema).max(10);
+const transcriptSchema = z.string().max(5000);
 
-export type SessionState =
-  | ({ phase: 'listen' } & Scene)
-  | ({ phase: 'debate'; decision: Decision; missing: string[] } & Scene)
-  | ({ phase: 'answer'; decision: Decision; missing: string[]; transcript: string } & Scene)
-  | ({ phase: 'review'; decision: Decision; transcript: string } & Scene)
-  | ({ phase: 'roll'; roll: RollView } & Scene)
-  | ({ phase: 'break' } & Scene);
+const sessionStateSchema = z.discriminatedUnion('phase', [
+  z.strictObject({ phase: z.literal('listen'), scene: sceneSchema }),
+  z.strictObject({
+    phase: z.literal('debate'),
+    scene: sceneSchema,
+    decision: decisionSchema,
+    missing: missingSchema,
+  }),
+  z.strictObject({
+    phase: z.literal('answer'),
+    scene: sceneSchema,
+    decision: decisionSchema,
+    missing: missingSchema,
+    transcript: transcriptSchema,
+  }),
+  z.strictObject({
+    phase: z.literal('review'),
+    scene: sceneSchema,
+    decision: decisionSchema,
+    transcript: transcriptSchema,
+  }),
+  z.strictObject({ phase: z.literal('roll'), scene: sceneSchema, roll: rollViewSchema }),
+  z.strictObject({ phase: z.literal('break'), scene: sceneSchema }),
+]);
+
+export type SessionState = z.infer<typeof sessionStateSchema>;
 
 export type SessionPhase = SessionState['phase'];
 export type VisiblePhase = Exclude<SessionPhase, 'review'>;
@@ -77,6 +98,9 @@ type StateOf<Phase extends SessionPhase> = Extract<SessionState, { phase: Phase 
 type Transition = Result<SessionState, TransitionError>;
 
 export const initialSession: SessionState = { phase: 'listen', scene: null };
+
+export const parseSessionState = (input: unknown): Result<SessionState, ParseIssue[]> =>
+  parseWith(sessionStateSchema, input);
 
 export const parseSessionEvent = (input: unknown): Result<SessionEvent, ParseIssue[]> =>
   parseWith(sessionEventSchema, input);
