@@ -24,6 +24,17 @@ npm install
 npm test
 ```
 
+## Local development
+
+Create `apps/worker/.dev.vars` from `apps/worker/.dev.vars.example` (a master password and a session secret), then run the Worker and the web app in two terminals:
+
+```bash
+npm run dev -w apps/worker
+npm run dev -w apps/web
+```
+
+Open `http://localhost:5173/prompter` for the tablet screen. The web dev server proxies `/api` and WebSockets to the Worker on port 8787.
+
 ## Language
 
 The UI and all code are in English. Story content can be in any language.
