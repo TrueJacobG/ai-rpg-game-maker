@@ -108,6 +108,27 @@ describe('ASSISTANT_RULES', () => {
   });
 });
 
+describe('jobPrompt plot state', () => {
+  const plot = '- [culprit/ghost-auditor] Duch audytora: discovered by the players';
+
+  it.each<AiJob>([
+    { type: 'next_beat' },
+    { type: 'bridge', situation: 'x' },
+    { type: 'generate', what: 'npc', brief: 'x' },
+  ])('tells the assistant what the players know for %j', (job) => {
+    const prompt = jobPrompt(job, '', 'pl', plot);
+    expect(prompt).toContain('Plot state');
+    expect(prompt).toContain(plot);
+  });
+
+  it.each<AiJob>([{ type: 'recap' }, { type: 'ask', question: 'x' }])(
+    'leaves the plot state out for %j',
+    (job) => {
+      expect(jobPrompt(job, '', 'pl', plot)).not.toContain('Plot state');
+    },
+  );
+});
+
 describe('jobPrompt', () => {
   const log = '1. Players entered Dock 7.\n2. They found the vault open.';
 

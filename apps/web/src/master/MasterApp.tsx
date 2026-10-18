@@ -4,6 +4,7 @@ import { CharactersPanel } from './CharactersPanel';
 import { DicePanel } from './DicePanel';
 import { LoginForm } from './LoginForm';
 import { PartyPanel } from './PartyPanel';
+import { PlotPanel } from './PlotPanel';
 import { PartyVersionProvider } from './party-version';
 import { StoryLogPanel } from './StoryLogPanel';
 import { TableControl } from './TableControl';
@@ -40,6 +41,7 @@ export const MasterApp = () => {
           <TableControl />
           <aside>
             <AssistantPanel />
+            <PlotPanel />
             <StoryLogPanel />
             <PartyPanel />
             <TabletPanel />
