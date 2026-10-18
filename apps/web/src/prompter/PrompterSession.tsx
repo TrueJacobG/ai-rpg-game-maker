@@ -3,6 +3,8 @@ import type { SpeechLang } from '../lib/language';
 import { useMicPermission } from '../lib/mic';
 import { useRoom } from '../lib/room';
 import { useSpeech } from '../lib/speech';
+import { useWakeLock } from '../lib/wakelock';
+import { FullscreenButton } from './FullscreenButton';
 import { LanguagePicker } from './LanguagePicker';
 import { PrompterScreen } from './PrompterScreen';
 
@@ -11,6 +13,7 @@ type PrompterSessionProps = { lang: SpeechLang; onLangChange: (lang: SpeechLang)
 export const PrompterSession = ({ lang, onLangChange }: PrompterSessionProps) => {
   const { status, view, send } = useRoom('/api/prompter/ws', parsePrompterMessage);
   const mic = useMicPermission();
+  const wake = useWakeLock();
   const answering = view?.phase === 'answer';
   const speech = useSpeech({
     active: answering,
@@ -29,6 +32,10 @@ export const PrompterSession = ({ lang, onLangChange }: PrompterSessionProps) =>
       {!answering && (
         <div className="controls" data-testid="prompter-controls">
           <LanguagePicker lang={lang} onChange={onLangChange} />
+          <FullscreenButton />
+          {wake === 'unsupported' && (
+            <p data-testid="wake-warning">This browser may let the screen go to sleep.</p>
+          )}
           {mic.state === 'prompt' && (
             <button type="button" data-testid="enable-mic" onClick={mic.request}>
               Enable microphone

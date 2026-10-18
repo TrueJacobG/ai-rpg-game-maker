@@ -50,6 +50,8 @@ A decision template has a prompt and required slots, for example `who`, `where`,
 
 Players decide as a group, one answer per decision. AI auto-ticking slots may come later.
 
+The prompter asks the browser to keep the screen on so the tablet does not fall asleep mid-session, and offers a full screen button between decisions. If the browser cannot keep the screen awake it says so; then raise the tablet's screen timeout in its settings.
+
 The tablet needs one tap per session to grant microphone permission. After that the master controls the mic from the laptop.
 
 ## Dice
