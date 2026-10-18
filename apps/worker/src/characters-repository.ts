@@ -56,13 +56,14 @@ export const createCharacterRepository = (db: D1Database) => ({
     const { results } = await db
       .prepare('SELECT id, player_token, data, updated_at FROM characters ORDER BY created_at, id')
       .all<Row>();
-    const summaries: CharacterSummary[] = [];
-    for (const row of results) {
-      const stored = toStored(row);
-      if (stored.status === 'error') return stored;
-      summaries.push({ id: stored.data.id, name: stored.data.character.name });
-    }
-    return success(summaries);
+    const stored = results.map(toStored);
+    const broken = stored.find((entry) => entry.status === 'error');
+    if (broken) return failure({ code: 'corrupt_data' });
+    return success(
+      stored.flatMap((entry) =>
+        entry.status === 'success' ? [{ id: entry.data.id, name: entry.data.character.name }] : [],
+      ),
+    );
   },
 
   async get(id: CharacterId): Promise<Result<StoredCharacter | null, RepositoryError>> {

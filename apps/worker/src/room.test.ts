@@ -59,20 +59,29 @@ const open = async (path: string, cookie?: string) => {
   if (!ws) throw new Error(`no websocket, status ${response.status}`);
   ws.accept();
 
-  const inbox: ServerMessage[] = [];
-  const waiting: ((message: ServerMessage) => void)[] = [];
+  let inbox: readonly ServerMessage[] = [];
+  let waiting: readonly ((message: ServerMessage) => void)[] = [];
   ws.addEventListener('message', (event) => {
     const message: ServerMessage = JSON.parse(String(event.data));
-    const waiter = waiting.shift();
-    if (waiter) waiter(message);
-    else inbox.push(message);
+    const [waiter, ...rest] = waiting;
+    if (waiter) {
+      waiting = rest;
+      waiter(message);
+    } else {
+      inbox = [...inbox, message];
+    }
   });
 
   return {
     next: (): Promise<ServerMessage> => {
-      const ready = inbox.shift();
-      if (ready) return Promise.resolve(ready);
-      return new Promise((resolve) => waiting.push(resolve));
+      const [ready, ...rest] = inbox;
+      if (ready) {
+        inbox = rest;
+        return Promise.resolve(ready);
+      }
+      return new Promise((resolve) => {
+        waiting = [...waiting, resolve];
+      });
     },
     send: (value: unknown) => ws.send(typeof value === 'string' ? value : JSON.stringify(value)),
     sendBinary: (bytes: Uint8Array) => ws.send(bytes),
@@ -82,10 +91,10 @@ const open = async (path: string, cookie?: string) => {
 };
 
 type Socket = Awaited<ReturnType<typeof open>>;
-const sockets: Socket[] = [];
+let sockets: readonly Socket[] = [];
 const connect = async (path: string, cookie?: string) => {
   const socket = await open(path, cookie);
-  sockets.push(socket);
+  sockets = [...sockets, socket];
   return socket;
 };
 
@@ -100,7 +109,9 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-  for (const socket of sockets.splice(0)) socket.close();
+  const open = sockets;
+  sockets = [];
+  for (const socket of open) socket.close();
 });
 
 describe('connecting', () => {

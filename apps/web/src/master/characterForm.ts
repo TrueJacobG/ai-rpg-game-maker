@@ -32,24 +32,29 @@ const numbered = (text: string): { line: number; text: string }[] =>
     .map((raw, index) => ({ line: index + 1, text: raw.trim() }))
     .filter((entry) => entry.text !== '');
 
+type StatLine = { key: string; value: number } | { error: string };
+
+const parseStatLine = (entry: { line: number; text: string }, section: string): StatLine => {
+  const where = `${section} line ${entry.line}`;
+  const match = /^(.+?)\s*[:=]\s*(-?\d+)$/.exec(entry.text);
+  if (!match) return { error: `${where}: write it as "name: number"` };
+  const key = toKey(match[1] ?? '');
+  if (key === null) return { error: `${where}: the name needs letters` };
+  return { key, value: Number(match[2]) };
+};
+
 const parseStats = (text: string, section: string): Parsed<Record<string, number>> => {
-  const value: Record<string, number> = {};
-  const errors: string[] = [];
-  for (const entry of numbered(text)) {
-    const match = /^(.+?)\s*[:=]\s*(-?\d+)$/.exec(entry.text);
-    if (!match) {
-      errors.push(`${section} line ${entry.line}: write it as "name: number"`);
-      continue;
-    }
-    const key = toKey(match[1] ?? '');
-    if (key === null) {
-      errors.push(`${section} line ${entry.line}: the name needs letters`);
-    } else if (key in value) {
-      errors.push(`${section} line ${entry.line}: "${key}" is listed twice`);
-    } else {
-      value[key] = Number(match[2]);
-    }
-  }
+  const lines = numbered(text).map((entry) => ({ entry, parsed: parseStatLine(entry, section) }));
+  const errors = lines.flatMap(({ entry, parsed }, index) => {
+    if ('error' in parsed) return [parsed.error];
+    const listedBefore = lines
+      .slice(0, index)
+      .some((earlier) => 'key' in earlier.parsed && earlier.parsed.key === parsed.key);
+    return listedBefore ? [`${section} line ${entry.line}: "${parsed.key}" is listed twice`] : [];
+  });
+  const value = Object.fromEntries(
+    lines.flatMap(({ parsed }) => ('key' in parsed ? [[parsed.key, parsed.value]] : [])),
+  );
   return { value, errors };
 };
 
@@ -59,17 +64,16 @@ const parseCards = <Card>(
   noun: string,
   build: (parts: string[]) => Card,
 ): Parsed<Card[]> => {
-  const value: Card[] = [];
-  const errors: string[] = [];
-  for (const entry of numbered(text)) {
+  const lines = numbered(text).map((entry) => {
     const parts = entry.text.split('|').map((part) => part.trim());
-    if ((parts[0] ?? '') === '') {
-      errors.push(`${section} line ${entry.line}: ${noun} needs a name`);
-    } else {
-      value.push(build(parts));
-    }
-  }
-  return { value, errors };
+    return (parts[0] ?? '') === ''
+      ? { error: `${section} line ${entry.line}: ${noun} needs a name` }
+      : { card: build(parts) };
+  });
+  return {
+    value: lines.flatMap((line) => ('card' in line ? [line.card] : [])),
+    errors: lines.flatMap((line) => ('error' in line ? [line.error] : [])),
+  };
 };
 
 const splitTags = (text: string | undefined): string[] =>
@@ -122,9 +126,8 @@ const statLines = (values: Record<string, number>): string =>
     .join('\n');
 
 const line = (...parts: string[]): string => {
-  const kept = [...parts];
-  while (kept.length > 1 && kept.at(-1) === '') kept.pop();
-  return kept.join(' | ');
+  const lastFilled = parts.findLastIndex((part) => part !== '');
+  return parts.slice(0, Math.max(lastFilled + 1, 1)).join(' | ');
 };
 
 export const draftFromCharacter = (character: Character): CharacterDraft => ({

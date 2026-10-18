@@ -34,11 +34,11 @@ const answer = {
   usage: { inputTokens: 10, outputTokens: 20, cacheReadTokens: 30, cacheWriteTokens: 0 },
 };
 
-const requests: AiRequest[] = [];
+let requests: readonly AiRequest[] = [];
 const respondWith = (result: Result<AiAnswer, AiError> = success(answer)) =>
   useAiProvider({
     complete: async (request) => {
-      requests.push(request);
+      requests = [...requests, request];
       return result;
     },
   });
@@ -48,7 +48,7 @@ const ask = (cookie: string, body: unknown) => call('POST', '/api/master/ai', { 
 const importPack = (cookie: string) => call('PUT', '/api/master/pack', { cookie, body: bundle });
 
 beforeEach(async () => {
-  requests.length = 0;
+  requests = [];
   clock.now = START;
   useAiProvider(null);
   await env.DB.prepare('DELETE FROM pack').run();

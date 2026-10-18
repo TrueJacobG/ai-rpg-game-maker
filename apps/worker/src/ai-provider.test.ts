@@ -24,17 +24,16 @@ const message = (overrides: Record<string, unknown> = {}) => ({
 });
 
 const fakeFetch = (reply: () => Response) => {
-  const calls: Captured[] = [];
+  let calls: readonly Captured[] = [];
   const impl = async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = new Request(input, init);
-    calls.push({
-      url: request.url,
-      headers: request.headers,
-      body: JSON.parse(await request.text()),
-    });
+    calls = [
+      ...calls,
+      { url: request.url, headers: request.headers, body: JSON.parse(await request.text()) },
+    ];
     return reply();
   };
-  return { calls, impl };
+  return { calls: () => calls, impl };
 };
 
 const json = (body: unknown, status = 200) =>
@@ -76,10 +75,10 @@ describe('createAnthropicProvider', () => {
   });
 
   it('sends the cached world, the question, the fallback opt-in and an explicit effort', async () => {
-    const { provider, calls } = providerWith(() => json(message()));
+    const { provider, calls: capturedCalls } = providerWith(() => json(message()));
     await provider.complete(ask);
 
-    const [call] = calls;
+    const [call] = capturedCalls();
     expect(call?.url).toBe('https://api.anthropic.com/v1/messages?beta=true');
     expect(call?.headers.get('x-api-key')).toBe('test-key');
     expect(call?.headers.get('anthropic-beta')).toContain('server-side-fallback-2026-07-01');
@@ -98,12 +97,12 @@ describe('createAnthropicProvider', () => {
   });
 
   it('uses the model it was given', async () => {
-    const { provider, calls } = providerWith(
+    const { provider, calls: capturedCalls } = providerWith(
       () => json(message({ model: 'claude-sonnet-5-5' })),
       'claude-sonnet-5-5',
     );
     await provider.complete(ask);
-    expect(calls[0]?.body).toMatchObject({ model: 'claude-sonnet-5-5' });
+    expect(capturedCalls()[0]?.body).toMatchObject({ model: 'claude-sonnet-5-5' });
   });
 
   it('reports a refusal instead of empty text', async () => {

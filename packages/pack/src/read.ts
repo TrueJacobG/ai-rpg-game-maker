@@ -29,7 +29,6 @@ const frontMatterSchema = z.strictObject({
 });
 
 type Document = PackBundle['documents'][number];
-type Source<Value> = { file: string; value: Value };
 
 const normalize = (files: FileMap): FileMap =>
   Object.fromEntries(
@@ -134,51 +133,58 @@ const mapIssue = (issue: ParseIssue, documents: string[], characters: string[]):
   return { file, message: inner(index === undefined ? [] : [index, ...rest]) };
 };
 
+const issuesOf = <Value>(results: Result<Value, PackIssue[]>[]): PackIssue[] =>
+  results.flatMap((result) => (result.status === 'error' ? result.error : []));
+
+const loadYaml = (files: FileMap, file: string): Result<unknown, PackIssue[]> => {
+  const text = requireFile(files, file);
+  if (text.status === 'error') return failure([text.error]);
+  const parsed = readYaml(file, text.data);
+  return parsed.status === 'error' ? failure([parsed.error]) : success(parsed.data);
+};
+
+const successValue = <Value>(result: Result<Value, PackIssue[]>): Value | undefined =>
+  result.status === 'success' ? result.data : undefined;
+
 export const readPack = (rawFiles: FileMap): Result<PackBundle, PackIssue[]> => {
   const files = normalize(rawFiles);
-  const issues: PackIssue[] = [];
+  const packInfo = loadYaml(files, 'pack.yaml');
+  const ruleset = loadYaml(files, 'ruleset.yaml');
+  const documents = documentEntries(files).map(({ file, kind, text }) => ({
+    file,
+    result: readDocument(file, kind, text),
+  }));
+  const characters = characterEntries(files).map(([file, text]) => ({
+    file,
+    result: readYaml(file, text),
+  }));
 
-  const loadYaml = (file: string): unknown => {
-    const text = requireFile(files, file);
-    if (text.status === 'error') return void issues.push(text.error);
-    const parsed = readYaml(file, text.data);
-    if (parsed.status === 'error') return void issues.push(parsed.error);
-    return parsed.data;
-  };
-
-  const packInfo = loadYaml('pack.yaml');
-  const ruleset = loadYaml('ruleset.yaml');
-
-  const documents: Source<Document>[] = [];
-  for (const { file, kind, text } of documentEntries(files)) {
-    const doc = readDocument(file, kind, text);
-    if (doc.status === 'success') documents.push({ file, value: doc.data });
-    else issues.push(...doc.error);
-  }
-
-  const characters: Source<unknown>[] = [];
-  for (const [file, text] of characterEntries(files)) {
-    const parsed = readYaml(file, text);
-    if (parsed.status === 'success') characters.push({ file, value: parsed.data });
-    else issues.push(parsed.error);
-  }
-
+  const issues = [
+    ...issuesOf([packInfo, ruleset]),
+    ...issuesOf(documents.map((entry) => entry.result)),
+    ...characters.flatMap((entry) => (entry.result.status === 'error' ? [entry.result.error] : [])),
+  ];
   if (issues.length > 0) return failure(issues);
 
-  const info = {
-    summary: '',
-    ...(typeof packInfo === 'object' && packInfo !== null ? packInfo : {}),
-  };
+  const documentSources = documents.flatMap(({ file, result }) =>
+    result.status === 'success' ? [{ file, value: result.data }] : [],
+  );
+  const characterSources = characters.flatMap(({ file, result }) =>
+    result.status === 'success' ? [{ file, value: result.data }] : [],
+  );
+  const rawInfo = successValue(packInfo);
+  const info = { summary: '', ...(typeof rawInfo === 'object' && rawInfo !== null ? rawInfo : {}) };
+
   const bundle = parsePackBundle({
     pack: info,
-    ruleset,
+    ruleset: successValue(ruleset),
     world: (files['world.md'] ?? '').trim(),
-    documents: documents.map((entry) => entry.value),
-    characters: characters.map((entry) => entry.value),
+    documents: documentSources.map((entry) => entry.value),
+    characters: characterSources.map((entry) => entry.value),
   });
   if (bundle.status === 'success') return success(bundle.data);
 
-  const documentNames = documents.map((entry) => entry.file);
-  const characterNames = characters.map((entry) => entry.file);
+  const documentNames = documentSources.map((entry) => entry.file);
+  const characterNames = characterSources.map((entry) => entry.file);
   return failure(bundle.error.map((issue) => mapIssue(issue, documentNames, characterNames)));
 };

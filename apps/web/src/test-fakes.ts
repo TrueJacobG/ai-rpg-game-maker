@@ -14,11 +14,11 @@ export class FakeWebSocket {
 
   constructor(url: string) {
     this.url = url;
-    FakeWebSocket.instances.push(this);
+    FakeWebSocket.instances = [...FakeWebSocket.instances, this];
   }
 
   send(data: string): void {
-    this.sent.push(data);
+    this.sent = [...this.sent, data];
   }
 
   close(): void {
@@ -67,7 +67,7 @@ export class FakeRecognition {
   onend: (() => void) | null = null;
 
   constructor() {
-    FakeRecognition.instances.push(this);
+    FakeRecognition.instances = [...FakeRecognition.instances, this];
   }
 
   start(): void {

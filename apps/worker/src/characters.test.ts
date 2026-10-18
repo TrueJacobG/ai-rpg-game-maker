@@ -92,7 +92,7 @@ describe('POST /api/master/characters', () => {
     const cookie = await login();
     const response = await call('POST', '/api/master/characters', {
       cookie,
-      body: { ...kira, secrets: ['x'.repeat(1900)].concat(Array(40).fill('y'.repeat(1900))) },
+      body: { ...kira, secrets: Array.from({ length: 41 }, () => 'y'.repeat(1900)) },
     });
     expect(response.status).toBe(413);
   });
