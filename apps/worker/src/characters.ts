@@ -2,7 +2,7 @@ import { parseCharacter, parseCharacterId } from '@ai-rpg/core/character';
 import { type Context, Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { requireMaster } from './auth';
-import { createCharacterRepository } from './characters-repository';
+import { addCharacter, createCharacterRepository } from './characters-repository';
 import type { AppDependencies, AppTypes } from './env';
 import { problem, readJson } from './http';
 import { newToken } from './tokens';
@@ -40,16 +40,8 @@ export const createCharacterRoutes = ({ now }: AppDependencies) => {
     if (character.status === 'error') {
       return problem(400, 'Invalid character', { errors: character.error });
     }
-    const id = parseCharacterId(crypto.randomUUID());
-    if (id.status === 'error') return problem(500, 'Could not create id');
-    const playerToken = newToken();
-    await repositoryOf(c).insert({
-      id: id.data,
-      playerToken,
-      character: character.data,
-      now: now(),
-    });
-    return c.json({ id: id.data, playerToken }, 201);
+    const created = await addCharacter(repositoryOf(c), character.data, now());
+    return c.json(created, 201);
   });
 
   routes.get('/:id', async (c) => {

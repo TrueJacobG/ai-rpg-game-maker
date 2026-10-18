@@ -53,6 +53,8 @@ Links are how the plot is wired: a quest links to the locations, culprits and en
 
 ## characters/<slug>.yaml
 
+Up to 20 starter characters. In the master panel, "Add the pack's characters" creates them (each with its own QR code) and skips any whose name already exists, so it is safe to press again after a new import.
+
 ```yaml
 name: Kira Voss
 attributes: { body: 1, reflex: 3, mind: 2, presence: 0 }

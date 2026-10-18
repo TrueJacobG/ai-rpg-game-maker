@@ -1,5 +1,11 @@
-import { type Character, type CharacterId, parseCharacter } from '@ai-rpg/core/character';
+import {
+  type Character,
+  type CharacterId,
+  newCharacterId,
+  parseCharacter,
+} from '@ai-rpg/core/character';
 import { failure, type Result, success } from '@ai-rpg/core/result';
+import { newToken } from './tokens';
 
 export type CharacterSummary = { id: string; name: string };
 
@@ -107,3 +113,14 @@ export const createCharacterRepository = (db: D1Database) => ({
 });
 
 export type CharacterRepository = ReturnType<typeof createCharacterRepository>;
+
+export const addCharacter = async (
+  repository: CharacterRepository,
+  character: Character,
+  now: number,
+): Promise<{ id: CharacterId; playerToken: string }> => {
+  const id = newCharacterId();
+  const playerToken = newToken();
+  await repository.insert({ id, playerToken, character, now });
+  return { id, playerToken };
+};

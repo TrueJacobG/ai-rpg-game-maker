@@ -2,6 +2,7 @@ import { parsePackBundle } from '@ai-rpg/core/pack';
 import { type Context, Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { requireMaster } from './auth';
+import { addCharacter, createCharacterRepository } from './characters-repository';
 import type { AppDependencies, AppTypes } from './env';
 import { problem, readJson } from './http';
 import { createPackRepository, type StoredPack } from './pack-repository';
@@ -58,6 +59,29 @@ export const createPackRoutes = ({ now }: AppDependencies) => {
       return found ? c.json(found) : problem(404, 'Not found');
     }),
   );
+
+  routes.post('/characters', async (c) => {
+    const loaded = await createPackRepository(c.env.DB).load();
+    if (loaded.status === 'error') return problem(500, 'Stored data is invalid');
+    if (!loaded.data) return problem(404, 'No pack imported');
+
+    const repository = createCharacterRepository(c.env.DB);
+    const existing = await repository.list();
+    if (existing.status === 'error') return problem(500, 'Stored data is invalid');
+    const taken = new Set(existing.data.map((entry) => entry.name));
+    const fresh = loaded.data.bundle.characters.filter((character) => !taken.has(character.name));
+
+    const created = await Promise.all(
+      fresh.map(async (character) => ({
+        id: (await addCharacter(repository, character, now())).id,
+        name: character.name,
+      })),
+    );
+    const skipped = loaded.data.bundle.characters
+      .filter((character) => taken.has(character.name))
+      .map((character) => character.name);
+    return c.json({ created, skipped });
+  });
 
   routes.delete('/', async (c) => {
     await createPackRepository(c.env.DB).clear();

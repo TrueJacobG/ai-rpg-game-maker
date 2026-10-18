@@ -37,12 +37,18 @@ const logEntriesSchema = z.array(
   }),
 );
 
+const characterImportSchema = z.strictObject({
+  created: z.array(z.strictObject({ id: z.uuid(), name: z.string() })),
+  skipped: z.array(z.string()),
+});
+
 const devicesSchema = z.array(z.strictObject({ id: z.uuid(), createdAt: z.string() }));
 
 export type CharacterSummary = z.infer<typeof characterListSchema>[number];
 export type StoredCharacter = z.infer<typeof storedCharacterSchema>;
 export type CreatedCharacter = z.infer<typeof createdCharacterSchema>;
 export type Pairing = z.infer<typeof pairingSchema>;
+export type CharacterImport = z.infer<typeof characterImportSchema>;
 export type AiAnswer = z.infer<typeof aiAnswerSchema>;
 export type LogEntry = z.infer<typeof logEntriesSchema>[number];
 export type PrompterDevice = z.infer<typeof devicesSchema>[number];
@@ -70,3 +76,6 @@ export const parseAiAnswer = (input: unknown): Parsed<AiAnswer> => parseWith(aiA
 
 export const parseLogEntries = (input: unknown): Parsed<LogEntry[]> =>
   parseWith(logEntriesSchema, input);
+
+export const parseCharacterImport = (input: unknown): Parsed<CharacterImport> =>
+  parseWith(characterImportSchema, input);

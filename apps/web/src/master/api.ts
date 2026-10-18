@@ -1,12 +1,14 @@
 import type { AiJob } from '@ai-rpg/core/ai';
 import {
   type AiAnswer,
+  type CharacterImport,
   type CharacterSummary,
   type CreatedCharacter,
   type LogEntry,
   type Pairing,
   type PrompterDevice,
   parseAiAnswer,
+  parseCharacterImport,
   parseCharacterList,
   parseCreatedCharacter,
   parseDevices,
@@ -137,3 +139,6 @@ export const clearLog = (): Promise<ApiResult<undefined>> =>
 
 export const getRuleset = (): Promise<ApiResult<Ruleset>> =>
   readJson('GET', '/api/master/pack/ruleset', parseRuleset);
+
+export const importPackCharacters = (): Promise<ApiResult<CharacterImport>> =>
+  readJson('POST', '/api/master/pack/characters', parseCharacterImport);
