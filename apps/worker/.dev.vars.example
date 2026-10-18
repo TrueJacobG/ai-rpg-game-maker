@@ -1,0 +1,2 @@
+MASTER_PASSWORD=change-me-to-a-long-passphrase
+SESSION_SECRET=change-me-to-at-least-32-random-characters
