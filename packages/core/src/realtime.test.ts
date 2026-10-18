@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { canSend, parseClientMessage, type Role, viewFor } from './realtime';
+import {
+  canSend,
+  parseClientMessage,
+  parseMasterMessage,
+  parsePlayerMessage,
+  parsePrompterMessage,
+  type Role,
+  viewFor,
+} from './realtime';
 import { initialSession, type SessionEvent, type SessionState } from './session';
 
 const decision = {
@@ -135,5 +143,53 @@ describe('parseClientMessage', () => {
 describe('initial state view', () => {
   it('starts as listen for everyone', () => {
     expect(viewFor('prompter', initialSession)).toEqual({ phase: 'listen', scene: null });
+  });
+});
+
+describe('server message parsers', () => {
+  const roundTrip = (role: Role, state: SessionState) =>
+    JSON.parse(JSON.stringify({ type: 'state', view: viewFor(role, state) }));
+
+  it.each(Object.values(states))('parses what the server sends the prompter in $phase', (state) => {
+    const message = roundTrip('prompter', state);
+    expect(parsePrompterMessage(message)).toEqual({ status: 'success', data: message });
+  });
+
+  it.each(Object.values(states))('parses what the server sends a player in $phase', (state) => {
+    const message = roundTrip('player', state);
+    expect(parsePlayerMessage(message)).toEqual({ status: 'success', data: message });
+  });
+
+  it.each(Object.values(states))('parses what the server sends the master in $phase', (state) => {
+    const message = roundTrip('master', state);
+    expect(parseMasterMessage(message)).toEqual({ status: 'success', data: message });
+  });
+
+  it('parses error messages for every parser', () => {
+    const message = { type: 'error', code: 'forbidden' };
+    expect(parsePrompterMessage(message).status).toBe('success');
+    expect(parsePlayerMessage(message).status).toBe('success');
+    expect(parseMasterMessage(message).status).toBe('success');
+  });
+
+  it.each([
+    ['an unknown error code', { type: 'error', code: 'oops' }],
+    ['an unknown message type', { type: 'ping' }],
+    [
+      'a prompter view with a secret field',
+      { type: 'state', view: { phase: 'listen', scene: null, secrets: [] } },
+    ],
+    ['no view', { type: 'state' }],
+    ['text', 'state'],
+  ])('rejects %s', (_label, input) => {
+    expect(parsePrompterMessage(input).status).toBe('error');
+  });
+
+  it('does not accept a master view as a prompter view', () => {
+    expect(parsePrompterMessage(roundTrip('master', states.review)).status).toBe('error');
+  });
+
+  it('does not accept a prompter view as a player view', () => {
+    expect(parsePlayerMessage(roundTrip('prompter', states.debate)).status).toBe('error');
   });
 });

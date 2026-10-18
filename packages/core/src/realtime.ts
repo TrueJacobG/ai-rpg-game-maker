@@ -3,12 +3,12 @@ import { type ParseIssue, parseWith } from './parse';
 import type { Result } from './result';
 import {
   type Decision,
-  type RollView,
+  rollViewSchema,
   type SessionEvent,
   type SessionState,
   sessionEventSchema,
+  sessionStateSchema,
   type TransitionError,
-  type VisiblePhase,
   visiblePhase,
 } from './session';
 
@@ -44,27 +44,71 @@ export type ClientMessage = z.infer<typeof clientMessageSchema>;
 export const parseClientMessage = (input: unknown): Result<ClientMessage, ParseIssue[]> =>
   parseWith(clientMessageSchema, input);
 
-type DecisionView = Pick<Decision, 'prompt' | 'slots'>;
+const sceneSchema = z.string().nullable();
+const missingSchema = z.array(z.string());
+const decisionViewSchema = z.strictObject({
+  prompt: z.string(),
+  slots: z.array(z.strictObject({ key: z.string(), label: z.string() })),
+});
 
-export type PrompterView =
-  | { phase: 'listen' | 'break'; scene: string | null }
-  | { phase: 'debate'; scene: string | null; decision: DecisionView; missing: string[] }
-  | {
-      phase: 'answer';
-      scene: string | null;
-      decision: DecisionView;
-      missing: string[];
-      transcript: string;
-    }
-  | { phase: 'roll'; scene: string | null; roll: RollView };
+const prompterViewSchema = z.discriminatedUnion('phase', [
+  z.strictObject({ phase: z.enum(['listen', 'break']), scene: sceneSchema }),
+  z.strictObject({
+    phase: z.literal('debate'),
+    scene: sceneSchema,
+    decision: decisionViewSchema,
+    missing: missingSchema,
+  }),
+  z.strictObject({
+    phase: z.literal('answer'),
+    scene: sceneSchema,
+    decision: decisionViewSchema,
+    missing: missingSchema,
+    transcript: z.string(),
+  }),
+  z.strictObject({ phase: z.literal('roll'), scene: sceneSchema, roll: rollViewSchema }),
+]);
 
-export type PlayerView = { phase: VisiblePhase; scene: string | null };
+const playerViewSchema = z.strictObject({
+  phase: z.enum(['listen', 'debate', 'answer', 'roll', 'break']),
+  scene: sceneSchema,
+});
+
+export type PrompterView = z.infer<typeof prompterViewSchema>;
+export type PlayerView = z.infer<typeof playerViewSchema>;
+type DecisionView = z.infer<typeof decisionViewSchema>;
 
 export type StateView = SessionState | PrompterView | PlayerView;
 
 export type ServerMessage =
   | { type: 'state'; view: StateView }
   | { type: 'error'; code: 'forbidden' | 'invalid_message' | TransitionError['code'] };
+
+const serverMessageSchema = <View extends z.ZodType>(view: View) =>
+  z.discriminatedUnion('type', [
+    z.strictObject({ type: z.literal('state'), view }),
+    z.strictObject({
+      type: z.literal('error'),
+      code: z.enum(['forbidden', 'invalid_message', 'invalid_transition', 'invalid_missing']),
+    }),
+  ]);
+
+const prompterMessageSchema = serverMessageSchema(prompterViewSchema);
+const playerMessageSchema = serverMessageSchema(playerViewSchema);
+const masterMessageSchema = serverMessageSchema(sessionStateSchema);
+
+export type PrompterMessage = z.infer<typeof prompterMessageSchema>;
+export type PlayerMessage = z.infer<typeof playerMessageSchema>;
+export type MasterMessage = z.infer<typeof masterMessageSchema>;
+
+export const parsePrompterMessage = (input: unknown): Result<PrompterMessage, ParseIssue[]> =>
+  parseWith(prompterMessageSchema, input);
+
+export const parsePlayerMessage = (input: unknown): Result<PlayerMessage, ParseIssue[]> =>
+  parseWith(playerMessageSchema, input);
+
+export const parseMasterMessage = (input: unknown): Result<MasterMessage, ParseIssue[]> =>
+  parseWith(masterMessageSchema, input);
 
 const decisionView = ({ prompt, slots }: Decision): DecisionView => ({ prompt, slots });
 

@@ -25,7 +25,7 @@ const decisionSchema = z
     });
   });
 
-const rollViewSchema = z.strictObject({
+export const rollViewSchema = z.strictObject({
   label: z.string().min(1).max(100),
   result: z
     .strictObject({
@@ -60,7 +60,7 @@ const sceneSchema = z.string().min(1).max(200).nullable();
 const missingSchema = z.array(keySchema).max(10);
 const transcriptSchema = z.string().max(5000);
 
-const sessionStateSchema = z.discriminatedUnion('phase', [
+export const sessionStateSchema = z.discriminatedUnion('phase', [
   z.strictObject({ phase: z.literal('listen'), scene: sceneSchema }),
   z.strictObject({
     phase: z.literal('debate'),
