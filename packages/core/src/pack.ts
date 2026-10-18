@@ -40,7 +40,7 @@ const packBundleSchema = z
     ruleset: rulesetSchema,
     world: z.string().max(100_000),
     documents: z.array(documentSchema).max(500),
-    characters: z.array(characterSchema).max(50),
+    characters: z.array(characterSchema).max(20),
   })
   .superRefine((bundle, ctx) => {
     const known = new Set<string>();

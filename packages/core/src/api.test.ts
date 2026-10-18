@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   parseAiAnswer,
+  parseCharacterImport,
   parseCharacterList,
   parseCreatedCharacter,
   parseDevices,
@@ -98,5 +99,16 @@ describe('assistant and log responses', () => {
     expect(parseLogEntries(entries)).toEqual({ status: 'success', data: entries });
     expect(parseLogEntries([{ ...entries[0], kind: 'gossip' }]).status).toBe('error');
     expect(parseLogEntries([]).status).toBe('success');
+  });
+});
+
+describe('parseCharacterImport', () => {
+  it('parses what was created and skipped', () => {
+    const result = { created: [{ id, name: 'Kira' }], skipped: ['Doc'] };
+    expect(parseCharacterImport(result)).toEqual({ status: 'success', data: result });
+    expect(parseCharacterImport({ created: [] }).status).toBe('error');
+    expect(parseCharacterImport({ created: [{ id: 'x', name: 'A' }], skipped: [] }).status).toBe(
+      'error',
+    );
   });
 });

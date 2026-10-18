@@ -238,3 +238,39 @@ describe('CharactersPanel editing', () => {
     expect(await screen.findByTestId('characters-error')).toBeInTheDocument();
   });
 });
+
+describe('CharactersPanel pack characters', () => {
+  it('adds the characters from the imported pack and refreshes the list', async () => {
+    serveList([]);
+    server.use(
+      http.post('/api/master/pack/characters', () =>
+        HttpResponse.json({ created: [{ id: kiraId, name: 'Kira Voss' }], skipped: ['Doc Hale'] }),
+      ),
+    );
+    const user = userEvent.setup();
+    render(<CharactersPanel />);
+    await screen.findByTestId('characters-empty');
+
+    serveList();
+    await user.click(screen.getByTestId('pack-characters'));
+
+    expect(await screen.findByTestId('pack-characters-result')).toHaveTextContent(
+      'Added 1, already there 1.',
+    );
+    expect(await screen.findByTestId(`character-${kiraId}`)).toBeInTheDocument();
+  });
+
+  it.each([
+    [404, 'Import a world pack first.'],
+    [500, 'Could not add'],
+  ])('explains a %s answer', async (status, message) => {
+    serveList([]);
+    server.use(http.post('/api/master/pack/characters', () => new HttpResponse(null, { status })));
+    const user = userEvent.setup();
+    render(<CharactersPanel />);
+    await screen.findByTestId('characters-empty');
+
+    await user.click(screen.getByTestId('pack-characters'));
+    expect(await screen.findByTestId('pack-characters-result')).toHaveTextContent(message);
+  });
+});

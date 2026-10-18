@@ -207,3 +207,86 @@ describe('stored data that no longer parses', () => {
     expect((await call('GET', '/api/master/pack/documents', { cookie })).status).toBe(500);
   });
 });
+
+describe('POST /api/master/pack/characters', () => {
+  const kira = {
+    name: 'Kira Voss',
+    attributes: { body: 1 },
+    skills: {},
+    hp: { current: 8, max: 10 },
+    items: [],
+    abilities: [],
+    secrets: ['Sold out her crew'],
+  };
+  const doc2 = { ...kira, name: 'Doc Hale' };
+
+  const withCharacters = (...characters: unknown[]) => bundle({ characters });
+
+  beforeEach(async () => {
+    await env.DB.prepare('DELETE FROM characters').run();
+  });
+
+  it('requires a session', async () => {
+    expect((await call('POST', '/api/master/pack/characters')).status).toBe(401);
+  });
+
+  it('answers 404 before a pack is imported', async () => {
+    const cookie = await login();
+    expect((await call('POST', '/api/master/pack/characters', { cookie })).status).toBe(404);
+  });
+
+  it('creates every starter character with its own player link', async () => {
+    const cookie = await login();
+    await importPack(cookie, withCharacters(kira, doc2));
+
+    const response = await call('POST', '/api/master/pack/characters', { cookie });
+    const body = await response.json<{
+      created: { id: string; name: string }[];
+      skipped: string[];
+    }>();
+
+    expect(response.status).toBe(200);
+    expect(body.created.map((entry) => entry.name)).toEqual(['Kira Voss', 'Doc Hale']);
+    expect(body.skipped).toEqual([]);
+
+    const list = await (await call('GET', '/api/master/characters', { cookie })).json<
+      { name: string }[]
+    >();
+    expect(list.map((entry) => entry.name).toSorted()).toEqual(['Doc Hale', 'Kira Voss']);
+
+    const stored = await (
+      await call('GET', `/api/master/characters/${body.created[0]?.id}`, { cookie })
+    ).json<{ playerToken: string; character: unknown }>();
+    expect(stored.playerToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(stored.character).toEqual(kira);
+  });
+
+  it('skips characters that already exist, so importing twice is safe', async () => {
+    const cookie = await login();
+    await importPack(cookie, withCharacters(kira, doc2));
+    await call('POST', '/api/master/pack/characters', { cookie });
+
+    const again = await call('POST', '/api/master/pack/characters', { cookie });
+    expect(await again.json()).toEqual({ created: [], skipped: ['Kira Voss', 'Doc Hale'] });
+    expect(await (await call('GET', '/api/master/characters', { cookie })).json()).toHaveLength(2);
+  });
+
+  it('only adds the missing ones', async () => {
+    const cookie = await login();
+    await importPack(cookie, withCharacters(kira));
+    await call('POST', '/api/master/pack/characters', { cookie });
+    await importPack(cookie, withCharacters(kira, doc2));
+
+    const response = await call('POST', '/api/master/pack/characters', { cookie });
+    const body = await response.json<{ created: { name: string }[]; skipped: string[] }>();
+    expect(body.created.map((entry) => entry.name)).toEqual(['Doc Hale']);
+    expect(body.skipped).toEqual(['Kira Voss']);
+  });
+
+  it('does nothing for a pack without characters', async () => {
+    const cookie = await login();
+    await importPack(cookie);
+    const response = await call('POST', '/api/master/pack/characters', { cookie });
+    expect(await response.json()).toEqual({ created: [], skipped: [] });
+  });
+});

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseCharacter, parseCharacterId } from './character';
+import { newCharacterId, parseCharacter, parseCharacterId } from './character';
 
 const validCharacter = {
   name: 'Kira Voss',
@@ -93,5 +93,13 @@ describe('parseCharacterId', () => {
 
   it.each(['', 'not-a-uuid', '3f2b8c1e8d4a4f6e9a7b1c2d3e4f5a6b'])('rejects %j', (value) => {
     expect(parseCharacterId(value).status).toBe('error');
+  });
+});
+
+describe('newCharacterId', () => {
+  it('makes a valid id each time', () => {
+    const first = newCharacterId();
+    expect(parseCharacterId(first).status).toBe('success');
+    expect(newCharacterId()).not.toBe(first);
   });
 });

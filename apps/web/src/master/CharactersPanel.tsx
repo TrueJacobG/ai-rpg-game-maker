@@ -1,6 +1,6 @@
 import type { CharacterSummary } from '@ai-rpg/core/api';
 import { useCallback, useEffect, useState } from 'react';
-import { listCharacters } from './api';
+import { importPackCharacters, listCharacters } from './api';
 import { CharacterEditor } from './CharacterEditor';
 
 type Selection = { kind: 'none' } | { kind: 'new' } | { kind: 'existing'; id: string };
@@ -12,6 +12,7 @@ type List =
 export const CharactersPanel = () => {
   const [list, setList] = useState<List>({ status: 'loading' });
   const [selection, setSelection] = useState<Selection>({ kind: 'none' });
+  const [packResult, setPackResult] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     const result = await listCharacters();
@@ -26,6 +27,19 @@ export const CharactersPanel = () => {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  const addFromPack = async () => {
+    const result = await importPackCharacters();
+    if (result.status === 'error') {
+      const missing = result.error.code === 'not_found';
+      return setPackResult(
+        missing ? 'Import a world pack first.' : 'Could not add the pack characters.',
+      );
+    }
+    const { created, skipped } = result.data;
+    setPackResult(`Added ${created.length}, already there ${skipped.length}.`);
+    reload();
+  };
 
   return (
     <section className="panel characters">
@@ -53,13 +67,19 @@ export const CharactersPanel = () => {
           ))}
         </ul>
       )}
-      <button
-        type="button"
-        data-testid="character-new"
-        onClick={() => setSelection({ kind: 'new' })}
-      >
-        New character
-      </button>
+      <div className="row">
+        <button
+          type="button"
+          data-testid="character-new"
+          onClick={() => setSelection({ kind: 'new' })}
+        >
+          New character
+        </button>
+        <button type="button" data-testid="pack-characters" onClick={addFromPack}>
+          Add the pack's characters
+        </button>
+      </div>
+      {packResult && <p data-testid="pack-characters-result">{packResult}</p>}
       {selection.kind !== 'none' && (
         <CharacterEditor
           key={selection.kind === 'existing' ? selection.id : 'new'}

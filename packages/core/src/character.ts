@@ -42,5 +42,7 @@ export type CharacterId = z.infer<typeof characterIdSchema>;
 export const parseCharacter = (input: unknown): Result<Character, ParseIssue[]> =>
   parseWith(characterSchema, input);
 
+export const newCharacterId = (): CharacterId => characterIdSchema.parse(crypto.randomUUID());
+
 export const parseCharacterId = (input: unknown): Result<CharacterId, ParseIssue[]> =>
   parseWith(characterIdSchema, input);
