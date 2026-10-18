@@ -107,6 +107,58 @@ describe('MasterApp', () => {
     expect(await screen.findByTestId('log-empty')).toBeInTheDocument();
   });
 
+  it('refreshes the party and the stat rolls when characters are added', async () => {
+    signedIn();
+    const kiraId = '3f2b8c1e-8d4a-4f6e-9a7b-1c2d3e4f5a6b';
+    const kira = {
+      name: 'Kira Voss',
+      attributes: { body: 1 },
+      skills: {},
+      hp: { current: 8, max: 10 },
+      items: [],
+      abilities: [],
+      secrets: [],
+    };
+    server.use(
+      http.get('/api/master/pack/ruleset', () =>
+        HttpResponse.json({
+          attributes: [{ key: 'body', label: 'Body' }],
+          skills: [],
+          difficulties: [{ key: 'routine', label: 'Routine', target: 10 }],
+        }),
+      ),
+    );
+    const user = userEvent.setup();
+    render(<MasterApp />);
+    await screen.findByTestId('party-empty');
+    await waitFor(() => expect(FakeWebSocket.instances).toHaveLength(1));
+    act(() =>
+      FakeWebSocket.latest.receive({ type: 'state', view: { phase: 'listen', scene: null } }),
+    );
+    expect(await screen.findByTestId('check-hint')).toHaveTextContent('Add a character');
+
+    server.use(
+      http.post('/api/master/pack/characters', () =>
+        HttpResponse.json({ created: [{ id: kiraId, name: 'Kira Voss' }], skipped: [] }),
+      ),
+      http.get('/api/master/characters', () =>
+        HttpResponse.json([{ id: kiraId, name: 'Kira Voss' }]),
+      ),
+      http.get(`/api/master/characters/${kiraId}`, () =>
+        HttpResponse.json({
+          id: kiraId,
+          playerToken: 'a'.repeat(43),
+          updatedAt: 'now',
+          character: kira,
+        }),
+      ),
+    );
+    await user.click(screen.getByTestId('pack-characters'));
+
+    expect(await screen.findByTestId(`party-hp-${kiraId}`)).toHaveTextContent('8 / 10');
+    expect(await screen.findByTestId('check-character')).toBeInTheDocument();
+  });
+
   it('logs out and returns to the password form', async () => {
     signedIn();
     const logout = vi.fn(() => new HttpResponse(null, { status: 204 }));

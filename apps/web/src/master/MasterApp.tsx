@@ -4,6 +4,7 @@ import { CharactersPanel } from './CharactersPanel';
 import { DicePanel } from './DicePanel';
 import { LoginForm } from './LoginForm';
 import { PartyPanel } from './PartyPanel';
+import { PartyVersionProvider } from './party-version';
 import { StoryLogPanel } from './StoryLogPanel';
 import { TableControl } from './TableControl';
 import { TabletPanel } from './TabletPanel';
@@ -34,17 +35,19 @@ export const MasterApp = () => {
           Log out
         </button>
       </div>
-      <div className="dashboard">
-        <TableControl />
-        <aside>
-          <AssistantPanel />
-          <StoryLogPanel />
-          <PartyPanel />
-          <TabletPanel />
-          <CharactersPanel />
-          <DicePanel />
-        </aside>
-      </div>
+      <PartyVersionProvider>
+        <div className="dashboard">
+          <TableControl />
+          <aside>
+            <AssistantPanel />
+            <StoryLogPanel />
+            <PartyPanel />
+            <TabletPanel />
+            <CharactersPanel />
+            <DicePanel />
+          </aside>
+        </div>
+      </PartyVersionProvider>
     </main>
   );
 };
