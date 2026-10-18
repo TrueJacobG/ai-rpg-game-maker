@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+.wrangler/
+.DS_Store
+*.log
+
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*
+!.env.example
+
+story/
+.claude/settings.local.json
