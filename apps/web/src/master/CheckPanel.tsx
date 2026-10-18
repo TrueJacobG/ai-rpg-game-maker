@@ -101,7 +101,7 @@ export const CheckPanel = ({ send, rng = secureRng }: CheckPanelProps) => {
       )}
       <select
         data-testid="check-character"
-        defaultValue=""
+        value={selectedId}
         onChange={(event) => choose(event.target.value)}
       >
         <option value="">Choose a character</option>

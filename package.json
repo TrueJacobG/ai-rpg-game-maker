@@ -13,7 +13,9 @@
     "build": "npm run build -w apps/web",
     "deploy": "npm run build && npm run deploy -w apps/worker",
     "pack:check": "tsx packages/pack/src/main.ts check",
-    "pack:import": "tsx packages/pack/src/main.ts import"
+    "pack:import": "tsx packages/pack/src/main.ts import",
+    "setup": "node scripts/setup.mjs",
+    "test:scripts": "node --test scripts/"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

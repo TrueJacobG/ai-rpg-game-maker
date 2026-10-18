@@ -4,6 +4,8 @@
 
 You need a free Cloudflare account, Node 26 and npm. Everything fits in the free plans for a normal game group.
 
+**Quick way:** run `npm install` and then `npm run setup`. It walks through steps 1 to 6 below, asks before each one, and types your passphrase into Wrangler without showing it. The manual steps follow if you prefer to run them yourself.
+
 ## 1. Log in
 
 ```bash
