@@ -91,8 +91,10 @@ const MicIndicator = ({
     <>
       <div className="mic-frame" data-testid="mic-frame" aria-hidden="true" />
       <div className="mic-banner" role="status" data-testid="mic-banner">
-        <span className="mic-dot" aria-hidden="true" />
-        LISTENING
+        <span className="mic-label">
+          <span className="mic-dot" aria-hidden="true" />
+          LISTENING
+        </span>
         {micError === 'network' && (
           <small data-testid="mic-warning">Speech service connection is unstable</small>
         )}

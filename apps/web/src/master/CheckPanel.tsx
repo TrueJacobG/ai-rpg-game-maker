@@ -3,9 +3,10 @@ import type { CheckMode } from '@ai-rpg/core/check';
 import { type Rng, secureRng } from '@ai-rpg/core/dice';
 import type { Ruleset } from '@ai-rpg/core/ruleset';
 import type { SessionEvent } from '@ai-rpg/core/session';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCharacter, getRuleset, listCharacters } from './api';
 import { buildCheck, statOptions } from './check';
+import { usePartyVersion } from './party-version';
 
 type CheckPanelProps = { send: (event: SessionEvent) => boolean; rng?: Rng };
 
@@ -20,39 +21,50 @@ const CUSTOM = 'custom';
 export const CheckPanel = ({ send, rng = secureRng }: CheckPanelProps) => {
   const [data, setData] = useState<Data>({ status: 'loading' });
   const [character, setCharacter] = useState<Character | null>(null);
+  const [selectedId, setSelectedId] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
   const [stat, setStat] = useState('');
   const [difficulty, setDifficulty] = useState('');
   const [customTarget, setCustomTarget] = useState('15');
   const [mode, setMode] = useState<CheckMode>('normal');
 
-  useEffect(() => {
-    let current = true;
-    Promise.all([getRuleset(), listCharacters()]).then(([ruleset, characters]) => {
-      if (!current) return;
-      if (ruleset.status === 'error') {
-        const notImported = ruleset.error.code === 'not_found';
-        return setData({
-          status: 'missing',
-          message: notImported
-            ? 'Import a world pack to roll by stats.'
-            : 'Could not load the ruleset.',
-        });
-      }
-      if (characters.status === 'error' || characters.data.length === 0) {
-        return setData({ status: 'missing', message: 'Add a character to roll by stats.' });
-      }
-      setDifficulty(ruleset.data.difficulties[0]?.key ?? CUSTOM);
-      setStat(statOptions(ruleset.data)[0]?.value ?? '');
-      setData({ status: 'ready', ruleset: ruleset.data, characters: characters.data });
-    });
-    return () => {
-      current = false;
-    };
+  const { version } = usePartyVersion();
+  const loadedVersion = useRef(version);
+
+  const loadData = useCallback(async () => {
+    const [ruleset, characters] = await Promise.all([getRuleset(), listCharacters()]);
+    if (ruleset.status === 'error') {
+      const notImported = ruleset.error.code === 'not_found';
+      return setData({
+        status: 'missing',
+        message: notImported
+          ? 'Import a world pack to roll by stats.'
+          : 'Could not load the ruleset.',
+      });
+    }
+    if (characters.status === 'error' || characters.data.length === 0) {
+      return setData({ status: 'missing', message: 'Add a character to roll by stats.' });
+    }
+    setDifficulty((current) => current || (ruleset.data.difficulties[0]?.key ?? CUSTOM));
+    setStat((current) => current || (statOptions(ruleset.data)[0]?.value ?? ''));
+    setData({ status: 'ready', ruleset: ruleset.data, characters: characters.data });
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    if (loadedVersion.current === version) return;
+    loadedVersion.current = version;
+    setSelectedId('');
+    setCharacter(null);
+    loadData();
+  }, [version, loadData]);
 
   const choose = async (id: string) => {
     setProblem(null);
+    setSelectedId(id);
     if (id === '') return setCharacter(null);
     const result = await getCharacter(id);
     if (result.status === 'error') return setProblem('Could not open the character.');

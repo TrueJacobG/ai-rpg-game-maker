@@ -2,6 +2,7 @@ import type { CharacterSummary } from '@ai-rpg/core/api';
 import { useCallback, useEffect, useState } from 'react';
 import { importPackCharacters, listCharacters } from './api';
 import { CharacterEditor } from './CharacterEditor';
+import { usePartyVersion } from './party-version';
 
 type Selection = { kind: 'none' } | { kind: 'new' } | { kind: 'existing'; id: string };
 type List =
@@ -13,6 +14,7 @@ export const CharactersPanel = () => {
   const [list, setList] = useState<List>({ status: 'loading' });
   const [selection, setSelection] = useState<Selection>({ kind: 'none' });
   const [packResult, setPackResult] = useState<string | null>(null);
+  const { bump } = usePartyVersion();
 
   const reload = useCallback(async () => {
     const result = await listCharacters();
@@ -28,6 +30,11 @@ export const CharactersPanel = () => {
     reload();
   }, [reload]);
 
+  const changed = () => {
+    reload();
+    bump();
+  };
+
   const addFromPack = async () => {
     const result = await importPackCharacters();
     if (result.status === 'error') {
@@ -38,7 +45,7 @@ export const CharactersPanel = () => {
     }
     const { created, skipped } = result.data;
     setPackResult(`Added ${created.length}, already there ${skipped.length}.`);
-    reload();
+    changed();
   };
 
   return (
@@ -84,11 +91,11 @@ export const CharactersPanel = () => {
         <CharacterEditor
           key={selection.kind === 'existing' ? selection.id : 'new'}
           id={selection.kind === 'existing' ? selection.id : null}
-          onChanged={reload}
+          onChanged={changed}
           onCreated={(id) => setSelection({ kind: 'existing', id })}
           onDeleted={() => {
             setSelection({ kind: 'none' });
-            reload();
+            changed();
           }}
         />
       )}

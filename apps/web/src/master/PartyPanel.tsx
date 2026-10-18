@@ -2,6 +2,7 @@ import type { Character } from '@ai-rpg/core/character';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { type ApiError, getCharacter, listCharacters, updateCharacter } from './api';
 import { withHp } from './hp';
+import { usePartyVersion } from './party-version';
 
 type Member = { id: string; character: Character };
 
@@ -17,6 +18,8 @@ export const PartyPanel = () => {
   const [error, setError] = useState<string | null>(null);
   const latest = useRef<Member[]>([]);
   const saving = useRef<Record<string, Promise<void>>>({});
+  const { version } = usePartyVersion();
+  const loadedVersion = useRef(version);
 
   const apply = useCallback((next: Member[]) => {
     latest.current = next;
@@ -40,6 +43,12 @@ export const PartyPanel = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (loadedVersion.current === version) return;
+    loadedVersion.current = version;
+    load();
+  }, [version, load]);
 
   const save = (id: string): Promise<void> => {
     const queued = (saving.current[id] ?? Promise.resolve()).then(async () => {
