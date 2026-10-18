@@ -1,8 +1,10 @@
 import type { SessionState } from '@ai-rpg/core/session';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeWebSocket } from '../test-fakes';
+import { server } from '../test-server';
 import { TableControl } from './TableControl';
 
 const decision = {
@@ -52,7 +54,13 @@ const setup = (state: SessionState = states.listen) => {
   return user;
 };
 
-beforeEach(() => FakeWebSocket.install());
+beforeEach(() => {
+  FakeWebSocket.install();
+  server.use(
+    http.get('/api/master/pack/ruleset', () => new HttpResponse(null, { status: 404 })),
+    http.get('/api/master/characters', () => HttpResponse.json([])),
+  );
+});
 
 describe('TableControl connection', () => {
   it('waits for the first state', () => {

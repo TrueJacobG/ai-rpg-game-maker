@@ -17,6 +17,7 @@ beforeEach(() => {
     http.get('/api/master/characters', () => HttpResponse.json([])),
     http.get('/api/master/prompter/devices', () => HttpResponse.json([])),
     http.get('/api/master/log', () => HttpResponse.json([])),
+    http.get('/api/master/pack/ruleset', () => new HttpResponse(null, { status: 404 })),
   );
 });
 
