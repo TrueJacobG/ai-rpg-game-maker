@@ -55,3 +55,17 @@ The tablet needs one tap per session to grant microphone permission. After that 
 - Any `NdM` roll.
 - Check: d20 + attribute (+ skill) against a difficulty, with advantage and disadvantage.
 - Results are shown on the master panel and, in the Roll phase, on the prompter.
+
+## Realtime
+
+One Durable Object (`SessionRoom`) holds the session state and talks to every device over WebSockets.
+
+| Role | Socket | Authenticated by |
+|---|---|---|
+| Master | `/api/master/ws` | master session cookie |
+| Prompter | `/api/prompter/ws` | paired device cookie |
+| Player | `/api/player/:token/ws` | player token |
+
+Clients send `{ "type": "event", "event": { ... } }`. The server answers every change with `{ "type": "state", "view": { ... } }` and sends each role only what it needs: the master gets the full state, the tablet gets the phase, scene, prompt and live transcript, players get the phase and scene. Errors (`forbidden`, `invalid_message`, `invalid_transition`, `invalid_missing`) go only to the sender.
+
+Who may send what: the master sends every event except `update_transcript`; the tablet sends only `update_transcript`; players send nothing.

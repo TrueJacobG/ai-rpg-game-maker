@@ -9,6 +9,7 @@ import { type AppDependencies, type AppTypes, parseEnv } from './env';
 import { problem, readJson } from './http';
 import { createPlayerRoutes } from './player';
 import { createPrompterAdminRoutes, createPrompterRoutes } from './prompter';
+import { connectToRoom } from './room';
 
 const LOGIN_BODY_LIMIT_BYTES = 4096;
 
@@ -55,6 +56,7 @@ const createMasterRoutes = (dependencies: AppDependencies) => {
 
   master.get('/me', requireMaster(now), (c) => c.json({ role: 'master' }));
 
+  master.get('/ws', requireMaster(now), (c) => connectToRoom(c, 'master'));
   master.route('/characters', createCharacterRoutes(dependencies));
   master.route('/prompter', createPrompterAdminRoutes(dependencies));
 

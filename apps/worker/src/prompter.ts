@@ -5,6 +5,7 @@ import { requireMaster } from './auth';
 import type { AppDependencies, AppTypes } from './env';
 import { problem, readJson } from './http';
 import { createPrompterRepository } from './prompter-repository';
+import { connectToRoom } from './room';
 import { newToken, TOKEN_PATTERN } from './tokens';
 
 const PAIRING_TTL_MS = 10 * 60 * 1000;
@@ -53,6 +54,7 @@ export const createPrompterRoutes = ({ now }: AppDependencies) => {
   });
 
   routes.get('/me', requirePrompter, (c) => c.json({ role: 'prompter' }));
+  routes.get('/ws', requirePrompter, (c) => connectToRoom(c, 'prompter'));
 
   return routes;
 };

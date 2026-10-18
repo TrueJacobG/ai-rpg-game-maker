@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   initialSession,
   parseSessionEvent,
+  parseSessionState,
   type SessionEvent,
   type SessionState,
   transition,
@@ -222,5 +223,32 @@ describe('parseSessionEvent', () => {
     expect(parseSessionEvent({ type: 'update_transcript', text: 'x'.repeat(5000) }).status).toBe(
       'success',
     );
+  });
+});
+
+describe('parseSessionState', () => {
+  const states: SessionState[] = [
+    initialSession,
+    { phase: 'debate', scene: 'a.png', decision, missing: ['where'] },
+    { phase: 'answer', scene: null, decision, missing: [], transcript: 'We run' },
+    { phase: 'review', scene: null, decision, transcript: 'We run' },
+    { phase: 'break', scene: null },
+  ];
+
+  it.each(states)('round trips $phase', (state) => {
+    expect(parseSessionState(JSON.parse(JSON.stringify(state)))).toEqual({
+      status: 'success',
+      data: state,
+    });
+  });
+
+  it.each([
+    ['an unknown phase', { phase: 'party', scene: null }],
+    ['a missing scene', { phase: 'listen' }],
+    ['a debate without a decision', { phase: 'debate', scene: null, missing: [] }],
+    ['an extra key', { phase: 'listen', scene: null, secret: 1 }],
+    ['null', null],
+  ])('rejects %s', (_label, input) => {
+    expect(parseSessionState(input).status).toBe('error');
   });
 });
