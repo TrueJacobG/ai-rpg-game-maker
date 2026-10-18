@@ -17,7 +17,13 @@ export default defineConfig({
     coverage: {
       provider: 'istanbul',
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/test-setup.ts', 'src/test-env.d.ts', 'src/index.ts'],
+      exclude: [
+        'src/**/*.test.ts',
+        'src/test-setup.ts',
+        'src/test-helpers.ts',
+        'src/test-env.d.ts',
+        'src/index.ts',
+      ],
       thresholds: { lines: 85, functions: 85, branches: 85, statements: 85 },
     },
   },

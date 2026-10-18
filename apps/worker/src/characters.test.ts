@@ -1,15 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createApp } from './app';
+import { harness, START, TOKEN_PATTERN } from './test-helpers';
 
-const PASSWORD = 'correct horse battery staple';
-const bindings = {
-  DB: env.DB,
-  MASTER_PASSWORD: PASSWORD,
-  SESSION_SECRET: 's'.repeat(40),
-};
-const START = 1_800_000_000_000;
-const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const kira = {
@@ -22,34 +14,7 @@ const kira = {
   secrets: ['Sold out her old crew'],
 };
 
-const app = createApp({ now: () => START });
-
-const login = async () => {
-  const response = await app.request(
-    '/api/master/login',
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ password: PASSWORD }),
-    },
-    bindings,
-  );
-  return (response.headers.get('set-cookie') ?? '').split(';')[0] ?? '';
-};
-
-const call = (method: string, path: string, options: { cookie?: string; body?: unknown } = {}) =>
-  app.request(
-    path,
-    {
-      method,
-      headers: {
-        ...(options.cookie ? { cookie: options.cookie } : {}),
-        ...(options.body === undefined ? {} : { 'content-type': 'application/json' }),
-      },
-      ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
-    },
-    bindings,
-  );
+const { call, login } = harness();
 
 const createKira = async (cookie: string, character: unknown = kira) => {
   const response = await call('POST', '/api/master/characters', { cookie, body: character });
@@ -119,11 +84,7 @@ describe('POST /api/master/characters', () => {
 
   it('answers 400 when the body is not JSON', async () => {
     const cookie = await login();
-    const response = await app.request(
-      '/api/master/characters',
-      { method: 'POST', headers: { cookie, 'content-type': 'application/json' }, body: '{nope' },
-      bindings,
-    );
+    const response = await call('POST', '/api/master/characters', { cookie, rawBody: '{nope' });
     expect(response.status).toBe(400);
   });
 
