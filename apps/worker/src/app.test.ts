@@ -1,9 +1,12 @@
+import { env as workerEnv } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { createApp } from './app';
 
 const PASSWORD = 'correct horse battery staple';
 const SECRET = 's'.repeat(40);
-const env = { MASTER_PASSWORD: PASSWORD, SESSION_SECRET: SECRET };
+const env = { DB: workerEnv.DB, MASTER_PASSWORD: PASSWORD, SESSION_SECRET: SECRET };
+const UNLIMITED = { limit: Number.MAX_SAFE_INTEGER, windowMs: 60_000 };
+const limits = { login: UNLIMITED, pair: UNLIMITED, ai: UNLIMITED };
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 const START = 1_800_000_000_000;
 
@@ -18,7 +21,7 @@ const jsonPost = (path: string, body: unknown, cookie?: string) => ({
 
 const makeApp = (clock = { now: START }) => ({
   clock,
-  app: createApp({ now: () => clock.now }),
+  app: createApp({ now: () => clock.now, limits }),
 });
 
 const loginCookie = async (app: ReturnType<typeof createApp>, bindings = env) => {

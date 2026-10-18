@@ -2,6 +2,7 @@ import type { Rng } from '@ai-rpg/core/dice';
 import { failure, type Result, success } from '@ai-rpg/core/result';
 import { z } from 'zod';
 import type { AiProvider } from './ai-provider';
+import type { RateLimits } from './rate-limit';
 
 const envSchema = z.object({
   MASTER_PASSWORD: z.string().min(12),
@@ -19,6 +20,7 @@ export type AppDependencies = {
   now: () => number;
   rng: Rng;
   createAi: (env: unknown) => AiProvider | null;
+  limits: RateLimits;
 };
 
 export const parseEnv = (raw: unknown): Result<Env, string[]> => {

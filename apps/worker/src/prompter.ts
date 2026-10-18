@@ -5,6 +5,7 @@ import { requireMaster } from './auth';
 import type { AppDependencies, AppTypes } from './env';
 import { problem, readJson } from './http';
 import { createPrompterRepository } from './prompter-repository';
+import { rateLimit } from './rate-limit';
 import { connectToRoom } from './room';
 import { newToken, TOKEN_PATTERN } from './tokens';
 
@@ -29,10 +30,11 @@ const requirePrompter: MiddlewareHandler<AppTypes> = async (c, next) => {
   await next();
 };
 
-export const createPrompterRoutes = ({ now }: AppDependencies) => {
+export const createPrompterRoutes = (dependencies: AppDependencies) => {
+  const { now } = dependencies;
   const routes = new Hono<AppTypes>();
 
-  routes.post('/pair', async (c) => {
+  routes.post('/pair', rateLimit('pair', dependencies), async (c) => {
     const body = pairSchema.safeParse(await readJson(c));
     if (!body.success) return problem(400, 'Invalid request');
 

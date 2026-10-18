@@ -6,6 +6,7 @@ import { requireMaster } from './auth';
 import type { AppDependencies, AppTypes } from './env';
 import { problem, readJson } from './http';
 import { createPackRepository } from './pack-repository';
+import { rateLimit } from './rate-limit';
 import { createStoryLogRepository, type LogEntry } from './story-log-repository';
 
 const MAX_TOKENS = 3000;
@@ -29,9 +30,11 @@ const FAILURES: Record<AiError['code'], { status: 422 | 429 | 502 | 503; title: 
   upstream: { status: 502, title: 'The AI service failed' },
 };
 
-export const createAiRoutes = ({ now, createAi }: AppDependencies) => {
+export const createAiRoutes = (dependencies: AppDependencies) => {
+  const { now, createAi } = dependencies;
   const routes = new Hono<AppTypes>();
   routes.use('*', requireMaster(now));
+  routes.use('*', rateLimit('ai', dependencies));
 
   routes.post(
     '/',
