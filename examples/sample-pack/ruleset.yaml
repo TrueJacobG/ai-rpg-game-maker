@@ -1,0 +1,16 @@
+attributes:
+  - { key: body, label: Body }
+  - { key: reflex, label: Reflex }
+  - { key: mind, label: Mind }
+  - { key: presence, label: Presence }
+skills:
+  - { key: firearms, label: Firearms, attribute: reflex }
+  - { key: stealth, label: Stealth, attribute: reflex }
+  - { key: hacking, label: Hacking, attribute: mind }
+  - { key: engineering, label: Engineering, attribute: mind }
+  - { key: streetwise, label: Streetwise, attribute: presence }
+  - { key: persuasion, label: Persuasion, attribute: presence }
+difficulties:
+  - { key: routine, label: Routine, target: 10 }
+  - { key: hard, label: Hard, target: 15 }
+  - { key: extreme, label: Extreme, target: 20 }

@@ -29,7 +29,7 @@ const addDuplicateKeyIssues = (
   });
 };
 
-const rulesetSchema = z
+export const rulesetSchema = z
   .strictObject({
     attributes: z.array(attributeSchema).min(1),
     skills: z.array(skillSchema),
