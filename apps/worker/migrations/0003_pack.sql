@@ -1,0 +1,5 @@
+CREATE TABLE pack (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  bundle TEXT NOT NULL,
+  imported_at TEXT NOT NULL
+) STRICT;

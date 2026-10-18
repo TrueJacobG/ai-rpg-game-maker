@@ -12,7 +12,8 @@
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build -w apps/web",
     "deploy": "npm run build && npm run deploy -w apps/worker",
-    "pack:check": "tsx packages/pack/src/main.ts check"
+    "pack:check": "tsx packages/pack/src/main.ts check",
+    "pack:import": "tsx packages/pack/src/main.ts import"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

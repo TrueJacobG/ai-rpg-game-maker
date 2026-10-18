@@ -1,6 +1,6 @@
 # World pack
 
-**Status: WIP. The file format below is implemented and validated; importing it into a running game comes next.**
+**Status: WIP. The format is implemented, validated and importable. The AI that reads the pack comes next.**
 
 The framework is generic. Everything that makes a game specific lives in a world pack: a folder of Markdown and YAML files. Your private pack goes in `story/` (git-ignored). `examples/sample-pack/` is a small public one to copy from. Story text can be in any language; the format only needs ASCII file names.
 
@@ -87,7 +87,17 @@ Keys use lowercase letters, digits and `_`. Keys referenced by characters must e
 npm run pack:check -- story
 ```
 
-prints every problem with its file name, and exits non-zero if the pack is invalid. (Added together with the importer.)
+prints every problem with its file name, and exits non-zero if the pack is invalid.
+
+## Importing a pack into your game
+
+```bash
+npm run pack:import -- story --url https://your-game.workers.dev
+```
+
+The command checks the pack first, asks for the master password (or reads `GM_PASSWORD` from the environment), logs in and uploads the pack. Importing replaces the previous pack completely. Plain `http` addresses are refused except for `localhost`, so the password never travels unencrypted.
+
+The pack is stored as one JSON row in the game's database, so the limit is 1.5 MB of text in total, which is several hundred pages. The master can read it back at `/api/master/pack`. Your files stay on your machine and in your own private repository; the public framework repository never sees them.
 
 ## Plot graph
 
