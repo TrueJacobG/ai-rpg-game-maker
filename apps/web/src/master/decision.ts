@@ -1,5 +1,6 @@
 import { failure, type Result, success } from '@ai-rpg/core/result';
 import { parseSessionEvent, type SessionEvent } from '@ai-rpg/core/session';
+import { toKey } from '../lib/key';
 
 const MAX_PROMPT_LENGTH = 500;
 const MAX_SLOTS = 10;
@@ -13,19 +14,6 @@ export const DECISION_TEMPLATES = [
   },
   { name: 'Break in', prompt: 'How do you get inside?', slots: 'Who, Where, Tool' },
 ] as const;
-
-export const slotKey = (label: string): string | null => {
-  const slug = label
-    .trim()
-    .toLowerCase()
-    .replaceAll('ł', 'l')
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-  if (!/[a-z]/.test(slug)) return null;
-  return /^[0-9]/.test(slug) ? `slot_${slug}` : slug;
-};
 
 export const buildDecisionEvent = (
   prompt: string,
@@ -43,7 +31,7 @@ export const buildDecisionEvent = (
   if (labels.length === 0) return failure('Add at least one slot');
   if (labels.length > MAX_SLOTS) return failure(`Use at most ${MAX_SLOTS} slots`);
 
-  const slots = labels.map((label) => ({ key: slotKey(label), label }));
+  const slots = labels.map((label) => ({ key: toKey(label), label }));
   if (slots.some((slot) => slot.key === null)) return failure('Slot names need letters');
   if (new Set(slots.map((slot) => slot.key)).size !== slots.length) {
     return failure('Slot names must be different');
