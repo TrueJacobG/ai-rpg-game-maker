@@ -1,6 +1,6 @@
 # Gameplay
 
-**Status: WIP, agreed in principle.**
+**Status: built.** This describes how the game behaves today.
 
 ## Roles and access
 
@@ -18,7 +18,7 @@ A leaked QR code exposes that player's secrets, which is why tokens can be regen
 
 ## Player page
 
-Read-only: attributes, skills, items, abilities, secrets, faction reputation.
+Read-only: hit points, attributes, skills, items, abilities and secrets. Secrets stay hidden behind a tap so nobody reads them over a shoulder. A chip shows the current phase. The sheet refreshes when the phase changes, every 15 seconds, and when the page comes back to the foreground. If the master issues a new QR code the old link stops working and the page says so.
 
 ## Session phases
 
@@ -43,7 +43,7 @@ When the mic is live the whole prompter screen must make it unmistakable, for ex
 A decision template has a prompt and required slots, for example `who`, `where`, `what`. Different decisions have different slots.
 
 1. The master starts a decision. The prompter shows the prompt and the slots. Phase: Debate.
-2. Players talk it over. The master presses "Listen". Phase: Answer.
+2. Players talk it over. The master presses "Open the microphone". Phase: Answer.
 3. Speech recognition on the tablet produces a transcript. It appears on the master panel with the slots as a checklist.
 4. The master ticks the slots that were covered.
 5. If something is missing, "Another try" goes back to Debate and highlights the missing slots. Otherwise the master accepts and the story continues.
@@ -54,11 +54,24 @@ The prompter asks the browser to keep the screen on so the tablet does not fall 
 
 The tablet needs one tap per session to grant microphone permission. After that the master controls the mic from the laptop.
 
-## Dice
+## Dice and checks
 
-- Any `NdM` roll.
-- Check: d20 + attribute (+ skill) against a difficulty, with advantage and disadvantage.
-- Results are shown on the master panel and, in the Roll phase, on the prompter.
+- The **Dice** panel rolls any `NdM` with a modifier (for example `2d6+3`) and keeps a short history. It is for the master only.
+- **Roll by stats** rolls a d20 check for a character: d20 plus the attribute, plus the skill rank for a skill, against a difficulty tier from the ruleset or a custom target, with advantage or disadvantage. The result goes to the tablet (Roll phase) and the story log.
+- A **custom d20 check** does the same with a hand-typed modifier, for when no pack or character exists.
+
+## The master panel
+
+| Panel | What it does |
+|---|---|
+| Table control | The controls that fit the current phase: scene image, decisions, checks, breaks, the microphone, review |
+| Assistant | Ask the AI for the next beat, a way back to the plot, new NPCs and quests, a recap, or canon questions. See [ai.md](ai.md) |
+| Plot | Mark quests, culprits, endings, people and places as found or done; reset for a new campaign |
+| Story so far | The log of notes, accepted decisions and rolls |
+| Party | Hit points of every character with -5, -1, +1 and +5 buttons |
+| Tablet | Pairing codes and the list of paired tablets |
+| Characters | Create, edit and delete characters, show their QR codes, add the pack's characters |
+| Dice | Free dice rolls |
 
 ## Realtime
 

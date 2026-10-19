@@ -147,6 +147,36 @@ describe('parsePackBundle', () => {
     expect(parsePackBundle(bundle({ characters })).status).toBe('success');
   });
 
+  describe('starter characters against the ruleset', () => {
+    const kira = {
+      name: 'Kira Voss',
+      attributes: { body: 1 },
+      skills: { hacking: 2 },
+      hp: { current: 8, max: 10 },
+      items: [],
+      abilities: [],
+      secrets: [],
+    };
+
+    it('accepts attributes and skills the ruleset defines', () => {
+      expect(parsePackBundle(bundle({ characters: [kira] })).status).toBe('success');
+    });
+
+    it('rejects an attribute the ruleset does not define', () => {
+      const characters = [{ ...kira, attributes: { body: 1, agility: 2 } }];
+      expect(issuesOf(bundle({ characters }))).toEqual([
+        { path: 'characters.0.attributes.agility', message: 'Unknown attribute "agility"' },
+      ]);
+    });
+
+    it('rejects a skill the ruleset does not define, at the right character', () => {
+      const characters = [kira, { ...kira, name: 'Doc', skills: { piloting: 1 } }];
+      expect(issuesOf(bundle({ characters }))).toEqual([
+        { path: 'characters.1.skills.piloting', message: 'Unknown skill "piloting"' },
+      ]);
+    });
+  });
+
   it('rejects unknown top level fields', () => {
     expect(parsePackBundle(bundle({ extra: 1 })).status).toBe('error');
   });

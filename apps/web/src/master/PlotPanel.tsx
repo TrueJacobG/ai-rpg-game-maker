@@ -2,7 +2,7 @@ import type { DocumentSummary, PlotState } from '@ai-rpg/core/api';
 import type { DocumentKind } from '@ai-rpg/core/pack';
 import type { PlotStatus } from '@ai-rpg/core/plot';
 import { useEffect, useState } from 'react';
-import { getPlot, listDocuments, setPlotStatus } from './api';
+import { clearPlot, getPlot, listDocuments, setPlotStatus } from './api';
 
 const KINDS = [
   { kind: 'quest', title: 'Quests' },
@@ -37,6 +37,7 @@ const statusOf = (plot: PlotState, doc: DocumentSummary): PlotStatus =>
 export const PlotPanel = () => {
   const [data, setData] = useState<Data>({ status: 'loading' });
   const [error, setError] = useState<string | null>(null);
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   useEffect(() => {
     let current = true;
@@ -79,6 +80,14 @@ export const PlotPanel = () => {
     }
   };
 
+  const reset = async () => {
+    setConfirmingReset(false);
+    const result = await clearPlot();
+    if (result.status === 'error') return setError('Could not reset the plot.');
+    setError(null);
+    setData({ status: 'ready', documents, plot: {} });
+  };
+
   return (
     <section className="panel">
       <h2>Plot</h2>
@@ -118,6 +127,27 @@ export const PlotPanel = () => {
           </div>
         );
       })}
+      <div className="row">
+        {!confirmingReset && (
+          <button type="button" data-testid="plot-reset" onClick={() => setConfirmingReset(true)}>
+            Reset for a new campaign
+          </button>
+        )}
+        {confirmingReset && (
+          <>
+            <button type="button" data-testid="plot-reset-confirm" onClick={reset}>
+              Really reset
+            </button>
+            <button
+              type="button"
+              data-testid="plot-reset-cancel"
+              onClick={() => setConfirmingReset(false)}
+            >
+              Keep
+            </button>
+          </>
+        )}
+      </div>
     </section>
   );
 };

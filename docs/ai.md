@@ -1,6 +1,6 @@
 # AI
 
-**Status: WIP. The assistant works end to end; the plot-aware prompts will keep improving with real play.**
+**Status: built.** The assistant works end to end and has been tested against a fake API, not yet against the real one. The prompts will improve with real play.
 
 The AI never changes the game on its own. It suggests, the master approves.
 
@@ -20,7 +20,7 @@ Answers are written in the pack's language.
 
 ## Plot state
 
-In the **Plot** panel the master marks quests, culprits, endings, people and places as *found* by the players or *done*. That list goes into every "What next?", "Bring them back" and "Create" question, so the assistant knows which clues the players already have and does not hand them out twice. Clear it with `DELETE /api/master/plot` when a new campaign starts.
+In the **Plot** panel the master marks quests, culprits, endings, people and places as *found* by the players or *done*. That list goes into every "What next?", "Bring them back" and "Create" question, so the assistant knows which clues the players already have and does not hand them out twice. Use "Reset for a new campaign" in the Plot panel to clear it.
 
 ## Story log
 

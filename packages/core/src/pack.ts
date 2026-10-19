@@ -56,6 +56,27 @@ const packBundleSchema = z
       known.add(ref);
     });
 
+    const attributeKeys = new Set(bundle.ruleset.attributes.map((attribute) => attribute.key));
+    const skillKeys = new Set(bundle.ruleset.skills.map((skill) => skill.key));
+    bundle.characters.forEach((character, index) => {
+      Object.keys(character.attributes).forEach((key) => {
+        if (attributeKeys.has(key)) return;
+        ctx.addIssue({
+          code: 'custom',
+          path: ['characters', index, 'attributes', key],
+          message: `Unknown attribute "${key}"`,
+        });
+      });
+      Object.keys(character.skills).forEach((key) => {
+        if (skillKeys.has(key)) return;
+        ctx.addIssue({
+          code: 'custom',
+          path: ['characters', index, 'skills', key],
+          message: `Unknown skill "${key}"`,
+        });
+      });
+    });
+
     bundle.documents.forEach((doc, index) => {
       doc.links.forEach((link, linkIndex) => {
         if (known.has(link)) return;

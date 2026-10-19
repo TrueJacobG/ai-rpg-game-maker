@@ -156,3 +156,6 @@ export const getPlot = (): Promise<ApiResult<PlotState>> =>
 
 export const setPlotStatus = (ref: string, status: PlotStatus): Promise<ApiResult<undefined>> =>
   readNothing('PUT', `/api/master/plot/${ref}`, { status });
+
+export const clearPlot = (): Promise<ApiResult<undefined>> =>
+  readNothing('DELETE', '/api/master/plot');
