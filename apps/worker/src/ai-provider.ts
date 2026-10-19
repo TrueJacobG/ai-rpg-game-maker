@@ -12,6 +12,8 @@ export type AiUsage = {
 
 export type AiAnswer = { text: string; model: string; usage: AiUsage };
 
+export type AiEffort = 'low' | 'medium' | 'high';
+
 export type AiError = { code: 'refused' | 'rate_limited' | 'unauthorized' | 'upstream' };
 
 export type AiProvider = {
@@ -21,6 +23,7 @@ export type AiProvider = {
 type AnthropicOptions = {
   apiKey: string;
   model: string;
+  effort?: AiEffort;
   fetch?: typeof fetch;
   maxRetries?: number;
 };
@@ -36,6 +39,7 @@ const errorCode = (error: unknown): AiError['code'] => {
 export const createAnthropicProvider = ({
   apiKey,
   model,
+  effort = 'medium',
   fetch,
   maxRetries,
 }: AnthropicOptions): AiProvider => {
@@ -53,7 +57,7 @@ export const createAnthropicProvider = ({
           max_tokens: maxTokens,
           betas: [FALLBACK_BETA],
           fallbacks: 'default',
-          output_config: { effort: 'medium' },
+          output_config: { effort },
           system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral', ttl: '1h' } }],
           messages: [{ role: 'user', content: prompt }],
         });

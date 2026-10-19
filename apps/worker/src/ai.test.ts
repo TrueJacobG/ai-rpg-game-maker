@@ -174,3 +174,113 @@ describe('POST /api/master/ai', () => {
     expect((await ask(cookie, { type: 'recap' })).status).toBe(500);
   });
 });
+
+describe('POST /api/master/ai/interpret', () => {
+  const scene = {
+    kind: 'quest',
+    slug: 'gate',
+    title: 'The gate',
+    tags: [],
+    secret: false,
+    links: [],
+    body: 'Guard.',
+    node: {
+      readAloud: 'Fog.',
+      image: 'dock.jpg',
+      requires: [],
+      interaction: {
+        prompt: 'Who goes in?',
+        questions: [
+          { key: 'who', label: 'Who' },
+          { key: 'how', label: 'How' },
+        ],
+      },
+      outcomes: [{ id: 'bribe', label: 'Bribe', text: 'Works.', sets: [], image: null }],
+    },
+  };
+  const story = {
+    ...bundle,
+    documents: [scene],
+    images: [{ file: 'dock.jpg', description: 'A dock' }],
+  };
+  const importStory = (cookie: string) => call('PUT', '/api/master/pack', { cookie, body: story });
+  const interpret = (cookie: string, body: unknown) =>
+    call('POST', '/api/master/ai/interpret', { cookie, body });
+  const reply = (text: string) => success({ ...answer, text });
+
+  it('requires a session', async () => {
+    expect((await call('POST', '/api/master/ai/interpret', { body: {} })).status).toBe(401);
+  });
+
+  it('turns what the players said into answers, an outcome and a picture', async () => {
+    const cookie = await login();
+    await importStory(cookie);
+    respondWith(
+      reply(
+        '{"answers": {"who": "Kai"}, "outcome": "bribe", "image": "dock.jpg", "reason": "Paid."}',
+      ),
+    );
+
+    const response = await interpret(cookie, {
+      ref: 'quest/gate',
+      transcript: 'Kai pays the guard',
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      answers: { who: 'Kai' },
+      missing: ['how'],
+      outcome: 'bribe',
+      image: 'dock.jpg',
+      reason: 'Paid.',
+      model: 'claude-opus-5-5',
+      usage: { inputTokens: 10 },
+    });
+    expect(requests[0]?.prompt).toContain('Kai pays the guard');
+    expect(requests[0]?.prompt).toContain('Write the answers and the reason in pl');
+  });
+
+  it('shares the cached system prompt with the other jobs', async () => {
+    const cookie = await login();
+    await importStory(cookie);
+    respondWith(reply('{}'));
+    await interpret(cookie, { ref: 'quest/gate', transcript: 'hmm' });
+    await ask(cookie, { type: 'next_beat' });
+    expect(requests[0]?.system).toBe(requests[1]?.system);
+  });
+
+  it('answers 502 when the model does not return readable JSON', async () => {
+    const cookie = await login();
+    await importStory(cookie);
+    respondWith(reply('I am not sure.'));
+    const response = await interpret(cookie, { ref: 'quest/gate', transcript: 'hmm' });
+    expect(response.status).toBe(502);
+  });
+
+  it('maps provider errors', async () => {
+    const cookie = await login();
+    await importStory(cookie);
+    respondWith(failure({ code: 'rate_limited' }));
+    expect((await interpret(cookie, { ref: 'quest/gate', transcript: 'hmm' })).status).toBe(429);
+  });
+
+  it('refuses unknown scenes, bad bodies, a missing pack and an unconfigured AI', async () => {
+    const cookie = await login();
+    respondWith();
+    expect((await interpret(cookie, { ref: 'quest/gate', transcript: 'x' })).status).toBe(404);
+    await importStory(cookie);
+    expect((await interpret(cookie, { ref: 'quest/nope', transcript: 'x' })).status).toBe(404);
+    expect((await interpret(cookie, { ref: 'quest/gate' })).status).toBe(400);
+    useAiProvider(null);
+    expect((await interpret(cookie, { ref: 'quest/gate', transcript: 'x' })).status).toBe(503);
+  });
+
+  it('answers 500 when the stored pack no longer parses', async () => {
+    const cookie = await login();
+    await env.DB.prepare('INSERT INTO pack (id, bundle, imported_at) VALUES (1, ?, ?)')
+      .bind('not json', 'now')
+      .run();
+    respondWith();
+    expect((await interpret(cookie, { ref: 'quest/gate', transcript: 'x' })).status).toBe(500);
+  });
+});

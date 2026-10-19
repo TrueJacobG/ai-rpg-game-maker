@@ -1,8 +1,17 @@
 import { ASSISTANT_RULES, jobPrompt, parseAiJob, worldContext } from '@ai-rpg/core/ai';
+import type { PackBundle } from '@ai-rpg/core/pack';
 import { plotSummary } from '@ai-rpg/core/plot';
+import {
+  findPlayable,
+  interpretPrompt,
+  parseInterpretation,
+  parseInterpretRequest,
+  storyBrief,
+  storyView,
+} from '@ai-rpg/core/story';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import type { AiError } from './ai-provider';
+import type { AiError, AiProvider } from './ai-provider';
 import { requireMaster } from './auth';
 import type { AppDependencies, AppTypes } from './env';
 import { problem, readJson } from './http';
@@ -10,8 +19,10 @@ import { createPackRepository } from './pack-repository';
 import { createPlotRepository } from './plot-repository';
 import { rateLimit } from './rate-limit';
 import { createStoryLogRepository, type LogEntry } from './story-log-repository';
+import { createStoryRepository } from './story-repository';
 
 const MAX_TOKENS = 3000;
+const INTERPRET_TOKENS = 2000;
 const LOG_ENTRIES = 200;
 const LOG_CHARS = 20_000;
 
@@ -32,11 +43,43 @@ const FAILURES: Record<AiError['code'], { status: 422 | 429 | 502 | 503; title: 
   upstream: { status: 502, title: 'The AI service failed' },
 };
 
+const failureResponse = (error: AiError) => {
+  const failure = FAILURES[error.code];
+  return problem(failure.status, failure.title);
+};
+
+const complete = (provider: AiProvider, bundle: PackBundle, prompt: string, maxTokens: number) =>
+  provider.complete({
+    system: `${ASSISTANT_RULES}\n\n${worldContext(bundle)}`,
+    prompt,
+    maxTokens,
+  });
+
+const storyState = async (db: D1Database, bundle: PackBundle): Promise<string> => {
+  const plot = plotSummary(bundle, await createPlotRepository(db).list());
+  const view = storyView(bundle, await createStoryRepository(db).flags(), null);
+  return [plot, storyBrief(view)].filter((part) => part !== '').join('\n\n');
+};
+
 export const createAiRoutes = (dependencies: AppDependencies) => {
   const { now, createAi } = dependencies;
   const routes = new Hono<AppTypes>();
   routes.use('*', requireMaster(now));
   routes.use('*', rateLimit('ai', dependencies));
+
+  const withAi = async (
+    db: D1Database,
+    env: unknown,
+    run: (provider: AiProvider, bundle: PackBundle) => Promise<Response>,
+  ) => {
+    const loaded = await createPackRepository(db).load();
+    if (loaded.status === 'error') return problem(500, 'Stored data is invalid');
+    if (!loaded.data) return problem(404, 'Import a world pack first');
+
+    const provider = createAi(env);
+    if (!provider) return problem(503, 'The AI is not set up: set ANTHROPIC_API_KEY');
+    return run(provider, loaded.data.bundle);
+  };
 
   routes.post(
     '/',
@@ -45,30 +88,45 @@ export const createAiRoutes = (dependencies: AppDependencies) => {
       const job = parseAiJob(await readJson(c));
       if (job.status === 'error') return problem(400, 'Invalid request', { errors: job.error });
 
-      const loaded = await createPackRepository(c.env.DB).load();
-      if (loaded.status === 'error') return problem(500, 'Stored data is invalid');
-      if (!loaded.data) return problem(404, 'Import a world pack first');
-
-      const provider = createAi(c.env);
-      if (!provider) return problem(503, 'The AI is not set up: set ANTHROPIC_API_KEY');
-
-      const { bundle } = loaded.data;
-      const log = logText(await createStoryLogRepository(c.env.DB).recent(LOG_ENTRIES));
-      const answer = await provider.complete({
-        system: `${ASSISTANT_RULES}\n\n${worldContext(bundle)}`,
-        prompt: jobPrompt(
+      return withAi(c.env.DB, c.env, async (provider, bundle) => {
+        const log = logText(await createStoryLogRepository(c.env.DB).recent(LOG_ENTRIES));
+        const prompt = jobPrompt(
           job.data,
           log,
           bundle.pack.language,
-          plotSummary(bundle, await createPlotRepository(c.env.DB).list()),
-        ),
-        maxTokens: MAX_TOKENS,
+          await storyState(c.env.DB, bundle),
+        );
+        const answer = await complete(provider, bundle, prompt, MAX_TOKENS);
+        return answer.status === 'error' ? failureResponse(answer.error) : c.json(answer.data);
       });
-      if (answer.status === 'error') {
-        const failure = FAILURES[answer.error.code];
-        return problem(failure.status, failure.title);
+    },
+  );
+
+  routes.post(
+    '/interpret',
+    bodyLimit({ maxSize: 64 * 1024, onError: () => problem(413, 'Payload too large') }),
+    async (c) => {
+      const request = parseInterpretRequest(await readJson(c));
+      if (request.status === 'error') {
+        return problem(400, 'Invalid request', { errors: request.error });
       }
-      return c.json(answer.data);
+
+      return withAi(c.env.DB, c.env, async (provider, bundle) => {
+        const scene = findPlayable(bundle, request.data.ref);
+        if (!scene) return problem(404, 'Not a story scene');
+
+        const prompt = `${interpretPrompt(bundle, scene, request.data.transcript)}\n\nWrite the answers and the reason in ${bundle.pack.language}.`;
+        const answer = await complete(provider, bundle, prompt, INTERPRET_TOKENS);
+        if (answer.status === 'error') return failureResponse(answer.error);
+
+        const interpretation = parseInterpretation(answer.data.text, bundle, scene);
+        if (interpretation.status === 'error') return problem(502, 'The AI answer was unreadable');
+        return c.json({
+          ...interpretation.data,
+          model: answer.data.model,
+          usage: answer.data.usage,
+        });
+      });
     },
   );
 

@@ -16,6 +16,7 @@ import { createPrompterAdminRoutes, createPrompterRoutes } from './prompter';
 import { DEFAULT_LIMITS, rateLimit } from './rate-limit';
 import { connectToRoom } from './room';
 import { createStoryLogRoutes } from './story-log-routes';
+import { createStoryRoutes } from './story-routes';
 
 const LOGIN_BODY_LIMIT_BYTES = 4096;
 
@@ -69,6 +70,7 @@ const createMasterRoutes = (dependencies: AppDependencies) => {
   master.route('/log', createStoryLogRoutes(dependencies));
   master.route('/ai', createAiRoutes(dependencies));
   master.route('/plot', createPlotRoutes(dependencies));
+  master.route('/story', createStoryRoutes(dependencies));
 
   return master;
 };
