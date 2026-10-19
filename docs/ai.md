@@ -18,6 +18,12 @@ The master panel has an **Assistant** with five jobs. All of them send the whole
 
 Answers are written in the pack's language.
 
+## Interpreting what the players said
+
+When a scene has an interaction, the tablet asks the scene's questions and the players answer by speaking. After the microphone closes, the master console calls `POST /api/master/ai/interpret` with the scene and the transcript. The model replies with one JSON object: the players' answers to each question, which prepared outcome fits (or none), and which prepared image fits what happens next. The server validates it against the scene: unknown keys, outcomes and images are dropped, and questions nobody answered are reported as missing so the tablet can ask again. The master confirms the proposed outcome with one tap or picks another. Nothing is decided without that tap.
+
+The assistant's other jobs also see the story graph: which scenes are available, which are locked and what they wait for, and which flags are set. When no prepared scene fits or the graph has a gap, it writes a bridge to the nearest scene or ending the players can still reach.
+
 ## Plot state
 
 In the **Plot** panel the master marks quests, culprits, endings, people and places as *found* by the players or *done*. That list goes into every "What next?", "Bring them back" and "Create" question, so the assistant knows which clues the players already have and does not hand them out twice. Use "Reset for a new campaign" in the Plot panel to clear it.
@@ -35,38 +41,44 @@ cd apps/worker
 npx wrangler secret put ANTHROPIC_API_KEY
 ```
 
-The default model is `claude-opus-5-5`. To use a cheaper one, set a plain variable `AI_MODEL` (for example `claude-sonnet-5-5`) in `wrangler.jsonc` under `vars`, or as a secret.
+The default model is `claude-opus-5-5` at `medium` effort. To use another, set plain variables in `wrangler.jsonc` under `vars` (or as secrets):
+
+```jsonc
+"vars": { "AI_MODEL": "claude-sonnet-5-5", "AI_EFFORT": "high" }
+```
+
+`AI_EFFORT` is `low`, `medium` or `high`. Higher effort thinks longer: better steering, more output tokens.
 
 A Claude subscription (Pro or Max) does not cover API calls from your own app. The API key comes from the Anthropic Console and is billed by usage.
 
 ## How it is built
 
 - `packages/core/src/ai.ts`: the job schema and the prompt builders. Pure functions, tested.
-- `apps/worker/src/ai-provider.ts`: a small provider interface with the Anthropic implementation. The world goes in a cached system block (one hour) that is byte-identical between questions, so repeated questions read it from the cache at a fraction of the price. Effort is set to `medium`. Server-side refusal fallback is on, so a request the model declines (a hacking scene can trip the cyber classifier) is retried on a fallback model instead of failing.
-- `apps/worker/src/ai-routes.ts`: `POST /api/master/ai`.
+- `apps/worker/src/ai-provider.ts`: a small provider interface with the Anthropic implementation. The world goes in a cached system block (one hour) that is byte-identical between questions, so repeated questions read it from the cache at a fraction of the price. Effort comes from `AI_EFFORT` (default `medium`). Server-side refusal fallback is on, so a request the model declines (a hacking scene can trip the cyber classifier) is retried on a fallback model instead of failing.
+- `apps/worker/src/ai-routes.ts`: `POST /api/master/ai` (the five jobs) and `POST /api/master/ai/interpret`.
+- `packages/core/src/story.ts`: the scene graph, the interpretation prompt and the reply parser.
 - Errors the master sees: no pack imported, key missing or rejected, request declined, AI busy.
 
 ## Cost of one session
 
-Assumptions: four hours, about 60 questions, a world of about 40k tokens read from the cache, about 3k fresh input and 1k output per question, one recap.
-
-Prices from the Anthropic pricing page (October 2026), per million tokens:
+Every question or interpretation is one call: the world (about 40k tokens) is read from the cache, plus about 3k fresh input and, depending on effort, 1k to 4k output including thinking. Prices from the Anthropic pricing page (October 2026), per million tokens:
 
 | Model | Input | Cache read | Output |
 |---|---|---|---|
 | Haiku 5.5 | $0.10 | $0.01 | $0.50 |
-| Sonnet 5.5 | $2 | $0.10 | $10 |
+| Sonnet 5.5 | $2 | $0.20 | $10 |
 | Opus 5.5 | $4 | $0.20 | $20 |
 
-| Model | Estimated cost per session |
-|---|---|
-| Haiku 5.5 | about $0.10 to $0.20 |
-| Sonnet 5.5 | about $1 to $2 |
-| Opus 5.5 (default) | about $2 to $4 |
+A one-hour cache write costs twice the input price (about $0.16 for a 40k world on Sonnet) and happens again after a pause longer than an hour.
 
-Each answer shows its token use (input, output, cached) under the text, so you can see the real numbers.
+| Setup | Per call | 4 hours (35 to 50 calls) | 8 hours (70 to 100 calls) |
+|---|---|---|---|
+| Haiku 5.5, medium | about $0.005 | about $0.25 | about $0.50 |
+| Sonnet 5.5, high | about $0.05 | about $2 to $3 | about $5 to $7 |
+| Opus 5.5, medium (default) | about $0.10 | about $4 to $5 | about $9 to $11 |
+
+Calls are roughly one interpretation per scene (about every 15 to 20 minutes) plus the master's own questions. Long thinking is the main variable: each answer shows its token use under the text, so you can see the real numbers.
 
 ## Not built yet
 
 - Using Workers AI as a free provider.
-- Letting the AI auto-tick decision slots.

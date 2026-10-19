@@ -96,6 +96,19 @@ describe('createAnthropicProvider', () => {
     expect(call?.body).not.toHaveProperty('thinking');
   });
 
+  it('sends the effort it was given', async () => {
+    const fetch = fakeFetch(() => json(message()));
+    const provider = createAnthropicProvider({
+      apiKey: 'k',
+      model: 'claude-sonnet-5-5',
+      effort: 'high',
+      fetch: fetch.impl,
+      maxRetries: 0,
+    });
+    await provider.complete(ask);
+    expect(fetch.calls()[0]?.body).toMatchObject({ output_config: { effort: 'high' } });
+  });
+
   it('uses the model it was given', async () => {
     const { provider, calls: capturedCalls } = providerWith(
       () => json(message({ model: 'claude-sonnet-5-5' })),
