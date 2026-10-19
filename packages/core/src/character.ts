@@ -3,13 +3,13 @@ import { type ParseIssue, parseWith } from './parse';
 import type { Result } from './result';
 import { keySchema } from './ruleset';
 
-const itemSchema = z.strictObject({
+export const itemSchema = z.strictObject({
   name: z.string().min(1).max(100),
   description: z.string().max(2000),
   tags: z.array(z.string().min(1).max(50)).max(20),
 });
 
-const abilitySchema = z.strictObject({
+export const abilitySchema = z.strictObject({
   name: z.string().min(1).max(100),
   description: z.string().max(2000),
 });

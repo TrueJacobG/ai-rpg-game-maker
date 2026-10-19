@@ -8,6 +8,7 @@
 - **Story graph:** scenes with requirements, outcomes and flags in the world pack; the console plays them, the AI reads what the players said and proposes the outcome; images prepared with the story.
 - **Tablet:** corner phase icon, loud LISTENING screen, Polish or English speech to text, screen kept awake, full screen.
 - **Characters:** sheets, QR links for phones, hit point buttons.
+- **Character creation at the table:** steps defined in the pack, a die decides the offer, the player chooses, choices become story flags.
 - **Dice:** a configurable die for the master and a place to enter real dice results.
 - **World packs:** Markdown and YAML format, `pack:check`, `pack:import`, starter characters.
 - **Assistant:** next beat, bridge scenes, creating NPCs and quests, recaps, questions about the canon, with the story log and plot state as context.

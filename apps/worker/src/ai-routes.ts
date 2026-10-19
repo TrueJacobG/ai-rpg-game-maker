@@ -1,4 +1,5 @@
 import { ASSISTANT_RULES, jobPrompt, parseAiJob, worldContext } from '@ai-rpg/core/ai';
+import { creationPrompt, findNameStep, parseNameAnswers } from '@ai-rpg/core/creation';
 import type { PackBundle } from '@ai-rpg/core/pack';
 import { plotSummary } from '@ai-rpg/core/plot';
 import {
@@ -61,6 +62,28 @@ const storyState = async (db: D1Database, bundle: PackBundle): Promise<string> =
   return [plot, storyBrief(view)].filter((part) => part !== '').join('\n\n');
 };
 
+const readName = async (
+  provider: AiProvider,
+  bundle: PackBundle,
+  step: NonNullable<ReturnType<typeof findNameStep>>,
+  transcript: string,
+) => {
+  const prompt = `${creationPrompt(step, transcript)}\n\nWrite the answers in ${bundle.pack.language}.`;
+  const answer = await complete(provider, bundle, prompt, INTERPRET_TOKENS);
+  if (answer.status === 'error') return failureResponse(answer.error);
+
+  const read = parseNameAnswers(answer.data.text);
+  if (read.status === 'error') return problem(502, 'The AI answer was unreadable');
+  return Response.json({
+    ...read.data,
+    outcome: null,
+    image: null,
+    reason: '',
+    model: answer.data.model,
+    usage: answer.data.usage,
+  });
+};
+
 export const createAiRoutes = (dependencies: AppDependencies) => {
   const { now, createAi } = dependencies;
   const routes = new Hono<AppTypes>();
@@ -112,6 +135,9 @@ export const createAiRoutes = (dependencies: AppDependencies) => {
       }
 
       return withAi(c.env.DB, c.env, async (provider, bundle) => {
+        const nameStep = findNameStep(bundle.creation, request.data.ref);
+        if (nameStep) return readName(provider, bundle, nameStep, request.data.transcript);
+
         const scene = findPlayable(bundle, request.data.ref);
         if (!scene) return problem(404, 'Not a story scene');
 

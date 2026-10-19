@@ -290,3 +290,46 @@ describe('POST /api/master/pack/characters', () => {
     expect(await response.json()).toEqual({ created: [], skipped: [] });
   });
 });
+
+describe('GET /api/master/pack/creation', () => {
+  const creation = {
+    hp: 10,
+    steps: [
+      { key: 'name', kind: 'name', prompt: 'Who is it?' },
+      {
+        key: 'gear',
+        kind: 'offer',
+        prompt: 'What do they carry?',
+        die: 2,
+        offers: [{ roll: [1, 2], options: ['pistol'] }],
+      },
+    ],
+    options: { pistol: { label: 'Pistol' } },
+  };
+
+  it('requires a session', async () => {
+    expect((await call('GET', '/api/master/pack/creation')).status).toBe(401);
+  });
+
+  it('gives the creation steps with the ruleset', async () => {
+    const cookie = await login();
+    await importPack(cookie, bundle({ creation }));
+    const response = await call('GET', '/api/master/pack/creation', { cookie });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      creation: { hp: 10, steps: [{ key: 'name' }, { key: 'gear' }] },
+      ruleset: { attributes: [{ key: 'body' }] },
+    });
+  });
+
+  it('says so when the pack has no character creation', async () => {
+    const cookie = await login();
+    await importPack(cookie);
+    expect((await call('GET', '/api/master/pack/creation', { cookie })).status).toBe(404);
+  });
+
+  it('asks for a pack first', async () => {
+    const cookie = await login();
+    expect((await call('GET', '/api/master/pack/creation', { cookie })).status).toBe(404);
+  });
+});

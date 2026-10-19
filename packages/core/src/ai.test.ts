@@ -8,6 +8,7 @@ const bundle: PackBundle = {
   ruleset: testRuleset,
   world: 'Rok 2187. Helix Dynamics rzadzi miastem.',
   images: [],
+  creation: null,
   documents: [
     {
       kind: 'npc',

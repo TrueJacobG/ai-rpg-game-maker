@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { characterSchema } from './character';
+import { type Creation, creationFlagNames, creationSchema } from './creation';
 import { imageSchema, nodeSchema, outcomeFlag, PLAYABLE_KINDS } from './node';
 import { type ParseIssue, parseWith } from './parse';
 import type { Result } from './result';
@@ -44,9 +45,12 @@ type Bundle = {
 const issue = (ctx: z.RefinementCtx, path: (string | number)[], message: string) =>
   ctx.addIssue({ code: 'custom', path, message });
 
-const CREATION_FLAG = /^char:/;
-
-const addNodeIssues = (bundle: Bundle, refs: Set<string>, ctx: z.RefinementCtx) => {
+const addNodeIssues = (
+  bundle: Bundle,
+  refs: Set<string>,
+  charFlags: Set<string>,
+  ctx: z.RefinementCtx,
+) => {
   const files = new Set(bundle.images.map((image) => image.file));
   const flags = new Set<string>();
   bundle.documents.forEach((doc) => {
@@ -98,7 +102,7 @@ const addNodeIssues = (bundle: Bundle, refs: Set<string>, ctx: z.RefinementCtx) 
 
     node.requires.forEach((flag, flagIndex) => {
       const path = [...at, 'requires', flagIndex];
-      const known = refs.has(flag) || flags.has(flag) || CREATION_FLAG.test(flag);
+      const known = refs.has(flag) || flags.has(flag) || charFlags.has(flag);
       if (flag === ref || flag.startsWith(`${ref}#`)) {
         issue(ctx, path, 'A story node cannot require itself');
       } else if (!known) {
@@ -108,6 +112,35 @@ const addNodeIssues = (bundle: Bundle, refs: Set<string>, ctx: z.RefinementCtx) 
   });
 };
 
+const addCreationIssues = (
+  creation: Creation,
+  ruleset: z.infer<typeof rulesetSchema>,
+  ctx: z.RefinementCtx,
+) => {
+  const attributes = new Set(ruleset.attributes.map((attribute) => attribute.key));
+  const skills = new Set(ruleset.skills.map((skill) => skill.key));
+  for (const [key, option] of Object.entries(creation.options)) {
+    for (const stat of Object.keys(option.grants.attributes)) {
+      if (!attributes.has(stat)) {
+        issue(
+          ctx,
+          ['creation', 'options', key, 'grants', 'attributes', stat],
+          `Unknown attribute "${stat}"`,
+        );
+      }
+    }
+    for (const stat of Object.keys(option.grants.skills)) {
+      if (!skills.has(stat)) {
+        issue(
+          ctx,
+          ['creation', 'options', key, 'grants', 'skills', stat],
+          `Unknown skill "${stat}"`,
+        );
+      }
+    }
+  }
+};
+
 const packBundleSchema = z
   .strictObject({
     pack: packInfoSchema,
@@ -115,6 +148,7 @@ const packBundleSchema = z
     world: z.string().max(100_000),
     documents: z.array(documentSchema).max(500),
     images: z.array(imageSchema).max(200).default([]),
+    creation: creationSchema.nullable().default(null),
     characters: z.array(characterSchema).max(20),
   })
   .superRefine((bundle, ctx) => {
@@ -152,7 +186,9 @@ const packBundleSchema = z
       });
     });
 
-    addNodeIssues(bundle, known, ctx);
+    const charFlags = new Set(bundle.creation ? creationFlagNames(bundle.creation) : []);
+    addNodeIssues(bundle, known, charFlags, ctx);
+    if (bundle.creation) addCreationIssues(bundle.creation, bundle.ruleset, ctx);
 
     bundle.documents.forEach((doc, index) => {
       doc.links.forEach((link, linkIndex) => {

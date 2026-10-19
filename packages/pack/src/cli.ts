@@ -62,12 +62,12 @@ const loadBundle = (directory: string, io: CliIo): PackBundle | null => {
 };
 
 const describePack = (bundle: PackBundle): string => {
-  const { pack, documents, characters, ruleset, images } = bundle;
+  const { pack, documents, characters, ruleset, images, creation } = bundle;
   const story = playableDocuments(bundle).length;
   return (
     `${pack.name} (${pack.language}): ${documents.length} documents, ${characters.length} characters, ` +
     `${ruleset.attributes.length} attributes, ${ruleset.skills.length} skills, ` +
-    `${story} story scenes, ${images.length} images`
+    `${story} story scenes, ${images.length} images, ${creation ? `${creation.steps.length} creation steps` : 'no character creation'}`
   );
 };
 

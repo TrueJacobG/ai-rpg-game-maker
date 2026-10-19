@@ -192,6 +192,11 @@ const mapIssue = (issue: ParseIssue, documents: string[], characters: string[]):
   if (section === 'characters')
     return { file: characters[Number(index)] ?? 'characters', message: inner(rest) };
   if (section === 'world') return { file: 'world.md', message: issue.message };
+  if (section === 'creation')
+    return {
+      file: 'creation.yaml',
+      message: inner([index, ...rest].filter((part) => part !== undefined)),
+    };
   if (section === 'images') return { file: 'images/images.yaml', message: inner(rest) };
   const file = section === 'ruleset' ? 'ruleset.yaml' : 'pack.yaml';
   return { file, message: inner(index === undefined ? [] : [index, ...rest]) };
@@ -224,9 +229,10 @@ export const readPack = (rawFiles: FileMap): Result<PackBundle, PackIssue[]> => 
   }));
 
   const images = readImages(files);
+  const creation = 'creation.yaml' in files ? loadYaml(files, 'creation.yaml') : success(undefined);
 
   const issues = [
-    ...issuesOf([packInfo, ruleset, images]),
+    ...issuesOf([packInfo, ruleset, images, creation]),
     ...issuesOf(documents.map((entry) => entry.result)),
     ...characters.flatMap((entry) => (entry.result.status === 'error' ? [entry.result.error] : [])),
   ];
@@ -246,6 +252,7 @@ export const readPack = (rawFiles: FileMap): Result<PackBundle, PackIssue[]> => 
     ruleset: successValue(ruleset),
     world: (files['world.md'] ?? '').trim(),
     images: successValue(images),
+    creation: successValue(creation),
     documents: documentSources.map((entry) => entry.value),
     characters: characterSources.map((entry) => entry.value),
   });

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { jsonObject, pickAnswers } from './answers';
 import { outcomeFlag, type StoryNode } from './node';
 import { documentRef, type PackBundle, type PackDocument } from './pack';
 import { type ParseIssue, parseWith } from './parse';
@@ -227,19 +228,6 @@ export const interpretPrompt = (
     .join('\n\n');
 };
 
-const jsonObject = (text: string): unknown => {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end <= start) return undefined;
-  try {
-    return JSON.parse(text.slice(start, end + 1));
-  } catch {
-    return undefined;
-  }
-};
-
-const nonEmpty = (value: string): boolean => value.trim() !== '';
-
 export const parseInterpretation = (
   text: string,
   bundle: PackBundle,
@@ -249,11 +237,9 @@ export const parseInterpretation = (
   if (!parsed.success) return failure({ code: 'unreadable' });
 
   const questions = doc.node.interaction?.questions ?? [];
-  const answers = Object.fromEntries(
-    questions.flatMap(({ key }) => {
-      const answer = parsed.data.answers[key]?.trim() ?? '';
-      return nonEmpty(answer) ? [[key, answer]] : [];
-    }),
+  const answers = pickAnswers(
+    parsed.data.answers,
+    questions.map(({ key }) => key),
   );
   const outcome = doc.node.outcomes.find((entry) => entry.id === parsed.data.outcome)?.id ?? null;
   const image = bundle.images.find((entry) => entry.file === parsed.data.image)?.file ?? null;

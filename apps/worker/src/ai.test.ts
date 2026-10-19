@@ -284,3 +284,73 @@ describe('POST /api/master/ai/interpret', () => {
     expect((await interpret(cookie, { ref: 'quest/gate', transcript: 'x' })).status).toBe(500);
   });
 });
+
+describe('POST /api/master/ai/interpret for a new character', () => {
+  const creation = {
+    hp: 10,
+    steps: [
+      { key: 'name', kind: 'name', prompt: 'Who is it?' },
+      {
+        key: 'gear',
+        kind: 'offer',
+        prompt: 'What do they carry?',
+        die: 2,
+        offers: [{ roll: [1, 2], options: ['pistol'] }],
+      },
+    ],
+    options: { pistol: { label: 'Pistol' } },
+  };
+  const interpret = (cookie: string, body: unknown) =>
+    call('POST', '/api/master/ai/interpret', { cookie, body });
+
+  it('reads the name and a short description from speech', async () => {
+    const cookie = await login();
+    await call('PUT', '/api/master/pack', { cookie, body: { ...bundle, creation } });
+    respondWith(
+      success({ ...answer, text: '{"answers": {"name": "Kira Voss", "concept": "ex-soldier"}}' }),
+    );
+
+    const response = await interpret(cookie, {
+      ref: 'creation/name',
+      transcript: 'Kira Voss, byly zolnierz',
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      answers: { name: 'Kira Voss', concept: 'ex-soldier' },
+      missing: [],
+      outcome: null,
+      image: null,
+    });
+    expect(requests[0]?.prompt).toContain('Who is it?');
+    expect(requests[0]?.prompt).toContain('Kira Voss, byly zolnierz');
+  });
+
+  it('reports what was not said', async () => {
+    const cookie = await login();
+    await call('PUT', '/api/master/pack', { cookie, body: { ...bundle, creation } });
+    respondWith(success({ ...answer, text: '{"answers": {"name": "Kira"}}' }));
+    const response = await interpret(cookie, { ref: 'creation/name', transcript: 'Kira' });
+    expect(await response.json()).toMatchObject({ missing: ['concept'] });
+  });
+
+  it('answers 502 for an unreadable reply and passes provider errors on', async () => {
+    const cookie = await login();
+    await call('PUT', '/api/master/pack', { cookie, body: { ...bundle, creation } });
+    respondWith(success({ ...answer, text: 'no idea' }));
+    expect((await interpret(cookie, { ref: 'creation/name', transcript: 'Kira' })).status).toBe(
+      502,
+    );
+    respondWith(failure({ code: 'rate_limited' }));
+    expect((await interpret(cookie, { ref: 'creation/name', transcript: 'Kira' })).status).toBe(
+      429,
+    );
+  });
+
+  it('does not treat other creation steps as a name', async () => {
+    const cookie = await login();
+    await call('PUT', '/api/master/pack', { cookie, body: { ...bundle, creation } });
+    respondWith();
+    expect((await interpret(cookie, { ref: 'creation/gear', transcript: 'x' })).status).toBe(404);
+  });
+});

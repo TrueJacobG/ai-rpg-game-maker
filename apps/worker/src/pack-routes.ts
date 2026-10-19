@@ -47,6 +47,14 @@ export const createPackRoutes = ({ now }: AppDependencies) => {
 
   routes.get('/ruleset', (c) => withPack(c, ({ bundle }) => c.json(bundle.ruleset)));
 
+  routes.get('/creation', (c) =>
+    withPack(c, ({ bundle }) =>
+      bundle.creation
+        ? c.json({ creation: bundle.creation, ruleset: bundle.ruleset })
+        : problem(404, 'This pack has no character creation'),
+    ),
+  );
+
   routes.get('/documents', (c) =>
     withPack(c, ({ bundle }) => c.json(bundle.documents.map(withoutBody))),
   );

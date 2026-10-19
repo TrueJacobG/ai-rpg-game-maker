@@ -74,6 +74,7 @@ beforeEach(() => {
   server.use(
     http.get('/api/master/characters', () => HttpResponse.json([])),
     http.get('/api/master/story', () => HttpResponse.json(empty)),
+    http.get('/api/master/pack/creation', () => new HttpResponse(null, { status: 404 })),
   );
 });
 
