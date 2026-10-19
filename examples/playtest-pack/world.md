@@ -1,0 +1,1 @@
+A storm has driven the party's fishing boat onto the rocks of Gull Island. The only light for miles, the lighthouse, has gone dark. Its keeper, old Maren Tolk, has not answered the radio for two days. Ships are due to pass tonight. Whatever the party decides in the next hour decides whether the light burns again.

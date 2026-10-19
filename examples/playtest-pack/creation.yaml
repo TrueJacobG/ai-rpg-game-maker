@@ -1,0 +1,36 @@
+hp: 10
+steps:
+  - key: name
+    kind: name
+    prompt: A figure steps off the boat. What is their name, and who are they?
+  - key: gear
+    kind: offer
+    prompt: What did they manage to save from the wreck? Roll the die, then choose.
+    die: 6
+    offers:
+      - { roll: [1, 2], options: [rusty_knife, rope] }
+      - { roll: [3, 4], options: [rusty_knife, rope, lantern] }
+      - { roll: [5, 6], options: [rope, lantern, flare_gun] }
+options:
+  rusty_knife:
+    label: Rusty knife
+    text: Dull but dependable.
+    grants:
+      items: [{ name: Rusty knife, description: Dull but dependable, tags: [weapon] }]
+  rope:
+    label: A coil of rope
+    text: Always useful on a boat.
+    grants:
+      attributes: { body: 1 }
+      items: [{ name: Rope, description: Twenty metres, tags: [tool] }]
+  lantern:
+    label: Storm lantern
+    text: Brass, old, and still lit.
+    grants:
+      items: [{ name: Storm lantern, description: Brass handle and still lit, tags: [light] }]
+  flare_gun:
+    label: Flare gun
+    text: Two flares left.
+    grants:
+      attributes: { nerve: 1 }
+      items: [{ name: Flare gun, description: Two flares, tags: [signal] }]

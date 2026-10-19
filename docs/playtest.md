@@ -1,19 +1,24 @@
 # Playtest checklist
 
-A short first session to find out whether everything works on your real devices. Do it with the sample pack first, then with your own story.
+A short first session to find out whether everything works on your real devices. Do it with a small pack first, then with your own story. `examples/playtest-pack` ("The Last Light") is built for this: one player plus the game master can finish it in about ten minutes, and it has two endings.
 
 **Needed:** a deployed game ([deploy.md](deploy.md)), a laptop, a tablet with Chrome, and a phone. An Anthropic key is only needed for step 8.
 
 ## Set up
 
-1. Import a story, for example `npm run pack:import -- examples/sample-pack --url https://<your address>`.
+1. Deploy with the pack's pictures and import it:
+   ```bash
+   STORY_IMAGES=examples/playtest-pack/images npm run deploy
+   npm run pack:import -- examples/playtest-pack --url https://<your address>
+   ```
+   The Last Light has no ready characters: make yours with **New character** on the Story tab, then scan the QR code it shows with the phone.
 2. Laptop: open `/master` and log in.
-3. On the Dashboard tab, in **Characters**, press "Add the pack's characters". Click a character: a QR code appears. Scan it with the phone; the sheet should open.
+3. With the sample pack, press "Add the pack's characters" under **Characters** on the Dashboard tab and click a character for its QR code. With The Last Light use **New character** on the Story tab instead. Either way, scan the QR code with the phone; the sheet should open.
 4. On the Dashboard tab press "Pair a tablet" in the **Tablet** panel. On the tablet open `/prompter` in Chrome, enter the 6-digit code, pick the speech language and allow the microphone (or tap "Enable microphone"). Use landscape and tap "Full screen".
 
 ## Run it
 
-1. **Scene.** On the Story tab open "The missing shipment". The text appears and the tablet shows its picture.
+1. **Scene.** On the Story tab open the first scene ("Arrival" in The Last Light, "The missing shipment" in the sample pack). The text appears and the tablet shows its picture.
 2. **Interaction.** Press "Start the interaction". The tablet should show INTERACTION with the question and its two prompts.
 3. **Microphone.** Press "Open the microphone". The tablet should show a red frame and a big LISTENING banner. Say a sentence such as "Kira goes in first and checks the lock". The words should appear on the tablet and on the laptop within a second or two.
 4. **Reading.** Press "Close the microphone". The console should show what it understood for each question and suggest an outcome (needs the key, step 8). If something is missing, press "Ask the players again": the tablet highlights what is missing.

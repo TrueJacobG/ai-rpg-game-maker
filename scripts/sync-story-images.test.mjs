@@ -53,3 +53,11 @@ test('leaves nothing behind when there are no pictures anywhere', () => {
   assert.deepEqual(result, { copied: [], source: null });
   assert.equal(existsSync(target), false);
 });
+
+test('prefers the folder named in STORY_IMAGES', () => {
+  const story = folder('story', ['story.png']);
+  const chosen = folder('chosen', ['chosen.png']);
+  const target = path.join(work, 'out');
+  const result = syncStoryImages({ sources: [chosen, story], target });
+  assert.deepEqual(result.copied, ['chosen.png']);
+});
