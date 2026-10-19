@@ -129,13 +129,23 @@ export const PlotPanel = () => {
       })}
       <div className="row">
         {!confirmingReset && (
-          <button type="button" data-testid="plot-reset" onClick={() => setConfirmingReset(true)}>
+          <button
+            className="danger"
+            type="button"
+            data-testid="plot-reset"
+            onClick={() => setConfirmingReset(true)}
+          >
             Reset for a new campaign
           </button>
         )}
         {confirmingReset && (
           <>
-            <button type="button" data-testid="plot-reset-confirm" onClick={reset}>
+            <button
+              className="danger"
+              type="button"
+              data-testid="plot-reset-confirm"
+              onClick={reset}
+            >
               Really reset
             </button>
             <button

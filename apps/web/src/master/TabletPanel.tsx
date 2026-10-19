@@ -44,7 +44,7 @@ export const TabletPanel = () => {
           {error}
         </p>
       )}
-      <button type="button" data-testid="pairing-create" onClick={pair}>
+      <button className="primary" type="button" data-testid="pairing-create" onClick={pair}>
         Pair a tablet
       </button>
       {pairing && (
@@ -61,6 +61,7 @@ export const TabletPanel = () => {
           <li key={device.id} data-testid={`device-${device.id}`}>
             Paired {device.createdAt.slice(0, 16).replace('T', ' ')}
             <button
+              className="danger"
               type="button"
               data-testid={`revoke-${device.id}`}
               onClick={() => revoke(device.id)}

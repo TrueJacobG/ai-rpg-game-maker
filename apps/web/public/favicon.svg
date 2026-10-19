@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <title>AI RPG Game Maker</title>
+  <rect width="32" height="32" rx="4" fill="#12100e"/>
+  <g stroke="#c9a24b" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M16 4.5 26 10.25v11.5L16 27.5 6 21.75v-11.5z"/>
+    <path d="M16 10.5 21.5 20h-11z"/>
+    <path d="M16 10.5V4.5M21.5 20 26 21.75M10.5 20 6 21.75"/>
+  </g>
+</svg>

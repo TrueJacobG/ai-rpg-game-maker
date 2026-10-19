@@ -1,5 +1,6 @@
 import { parsePlayerMessage } from '@ai-rpg/core/realtime';
 import { useRoom } from '../lib/room';
+import { PhaseIcon } from '../phase-icon';
 import { PHASES } from '../phases';
 import { CharacterSheet } from './CharacterSheet';
 import { useCharacter } from './useCharacter';
@@ -12,7 +13,7 @@ export const PlayerApp = ({ token }: { token: string }) => {
     <main className="player">
       {view && (
         <div className="phase-chip" data-testid="phase-chip" data-phase={view.phase}>
-          <span aria-hidden="true">{PHASES[view.phase].icon}</span> {PHASES[view.phase].label}
+          <PhaseIcon phase={view.phase} /> {PHASES[view.phase].label}
         </div>
       )}
       {character.status === 'loading' && <p className="hint">Loading…</p>}

@@ -62,17 +62,33 @@ export const StoryLogPanel = () => {
         onChange={(event) => setNote(event.target.value)}
       />
       <div className="row">
-        <button type="button" data-testid="log-add" disabled={note.trim() === ''} onClick={add}>
+        <button
+          className="primary"
+          type="button"
+          data-testid="log-add"
+          disabled={note.trim() === ''}
+          onClick={add}
+        >
           Add note
         </button>
         {!confirmingClear && (
-          <button type="button" data-testid="log-clear" onClick={() => setConfirmingClear(true)}>
+          <button
+            className="danger"
+            type="button"
+            data-testid="log-clear"
+            onClick={() => setConfirmingClear(true)}
+          >
             Clear the log
           </button>
         )}
         {confirmingClear && (
           <>
-            <button type="button" data-testid="log-clear-confirm" onClick={clear}>
+            <button
+              className="danger"
+              type="button"
+              data-testid="log-clear-confirm"
+              onClick={clear}
+            >
               Really clear
             </button>
             <button

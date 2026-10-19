@@ -118,6 +118,7 @@ export const AssistantPanel = () => {
         />
       )}
       <button
+        className="primary"
         type="button"
         data-testid="ai-ask"
         disabled={busy || (job.needsText && text.trim() === '')}
