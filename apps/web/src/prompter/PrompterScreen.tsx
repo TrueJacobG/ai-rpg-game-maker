@@ -1,6 +1,7 @@
 import type { PrompterView } from '@ai-rpg/core/realtime';
 import type { RoomStatus } from '../lib/room';
 import type { SpeechError } from '../lib/speech';
+import { PhaseIcon } from '../phase-icon';
 import { PHASES, type Phase } from '../phases';
 
 type DecisionPhase = Extract<PrompterView, { phase: 'debate' | 'answer' }>;
@@ -15,9 +16,7 @@ type PrompterScreenProps = {
 
 const PhaseBadge = ({ phase }: { phase: Phase }) => (
   <div className="phase-badge" data-testid="phase-badge" data-phase={phase}>
-    <span className="phase-icon" aria-hidden="true">
-      {PHASES[phase].icon}
-    </span>
+    <PhaseIcon phase={phase} />
     <span className="phase-label">{PHASES[phase].label}</span>
   </div>
 );

@@ -94,7 +94,7 @@ const DecisionPanel = ({ send }: { send: Send }) => {
           {error}
         </p>
       )}
-      <button type="button" data-testid="decision-start" onClick={start}>
+      <button className="primary" type="button" data-testid="decision-start" onClick={start}>
         Start decision
       </button>
     </section>
@@ -165,7 +165,13 @@ const RollPanel = ({ send }: { send: Send }) => {
           </select>
         </label>
       </div>
-      <button type="button" data-testid="roll-start" disabled={label.trim() === ''} onClick={start}>
+      <button
+        className="primary"
+        type="button"
+        data-testid="roll-start"
+        disabled={label.trim() === ''}
+        onClick={start}
+      >
         Roll on tablet
       </button>
     </section>
@@ -193,7 +199,7 @@ const SlotList = ({
   slots: { key: string; label: string }[];
   missing: string[];
 }) => (
-  <ul className="slots">
+  <ul className="slots compact">
     {slots.map((slot) => (
       <li
         key={slot.key}
@@ -210,7 +216,12 @@ export const DebatePanel = ({ state, send }: PanelProps<'debate'>) => (
   <section className="panel">
     <h2 data-testid="master-prompt">{state.decision.prompt}</h2>
     <SlotList slots={state.decision.slots} missing={state.missing} />
-    <button type="button" data-testid="mic-open" onClick={() => send({ type: 'open_mic' })}>
+    <button
+      className="primary"
+      type="button"
+      data-testid="mic-open"
+      onClick={() => send({ type: 'open_mic' })}
+    >
       Open the microphone
     </button>
   </section>
@@ -225,7 +236,12 @@ export const AnswerPanel = ({ state, send }: PanelProps<'answer'>) => (
     <p className="transcript" data-testid="master-transcript">
       {state.transcript}
     </p>
-    <button type="button" data-testid="mic-close" onClick={() => send({ type: 'close_mic' })}>
+    <button
+      className="primary"
+      type="button"
+      data-testid="mic-close"
+      onClick={() => send({ type: 'close_mic' })}
+    >
       Close the microphone
     </button>
   </section>
@@ -264,6 +280,7 @@ export const ReviewPanel = ({ state, send }: PanelProps<'review'>) => {
       </ul>
       <div className="row">
         <button
+          className="primary"
           type="button"
           data-testid="decision-accept"
           onClick={() => send({ type: 'accept' })}

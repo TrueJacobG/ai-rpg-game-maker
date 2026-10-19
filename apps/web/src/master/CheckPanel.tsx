@@ -160,7 +160,13 @@ export const CheckPanel = ({ send, rng = secureRng }: CheckPanelProps) => {
           ))}
         </select>
       </div>
-      <button type="button" data-testid="check-roll" disabled={!character} onClick={roll}>
+      <button
+        className="primary"
+        type="button"
+        data-testid="check-roll"
+        disabled={!character}
+        onClick={roll}
+      >
         Roll on tablet
       </button>
     </section>

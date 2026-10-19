@@ -164,6 +164,7 @@ export const CharacterEditor = ({ id, onChanged, onCreated, onDeleted }: Charact
         {saved && <span data-testid="character-saved">Saved</span>}
         {id && !confirmingDelete && (
           <button
+            className="danger"
             type="button"
             data-testid="character-delete"
             onClick={() => setConfirmingDelete(true)}
@@ -173,7 +174,12 @@ export const CharacterEditor = ({ id, onChanged, onCreated, onDeleted }: Charact
         )}
         {id && confirmingDelete && (
           <>
-            <button type="button" data-testid="character-delete-confirm" onClick={remove}>
+            <button
+              className="danger"
+              type="button"
+              data-testid="character-delete-confirm"
+              onClick={remove}
+            >
               Really delete
             </button>
             <button

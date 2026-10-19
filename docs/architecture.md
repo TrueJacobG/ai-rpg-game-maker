@@ -54,6 +54,10 @@ A four-hour session with six devices stays far below these limits.
 
 See [deploy.md](deploy.md): log in with Wrangler, `npm run deploy`, create the tables, set the secrets, import your pack.
 
+## Look and feel
+
+One stylesheet (`apps/web/src/styles.css`) with a small set of tokens at the top: warm ink and paper colours, a single brass accent, ember red reserved for the microphone and danger, a serif for headings and the tablet's big text, a monospace for numbers and labels, hairline rules, square corners. No external fonts or images; fonts are system stacks and every icon is an inline SVG. Each phase has its own colour (`data-phase` sets `--phase`), used by the stamp on the tablet and phones. The red LISTENING screen is deliberately the loudest thing in the app.
+
 ## Where things live
 
 - **Realtime:** `SessionRoom` Durable Object, one per deployment, keeps the table state in its SQLite storage. See [gameplay.md](gameplay.md).
