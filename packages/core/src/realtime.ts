@@ -22,6 +22,7 @@ const MASTER_EVENTS = [
   'open_mic',
   'close_mic',
   'accept',
+  'cancel_decision',
   'retry',
   'start_roll',
   'end_roll',

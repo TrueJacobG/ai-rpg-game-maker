@@ -85,7 +85,7 @@ describe('PrompterApp session', () => {
       }),
     );
 
-    expect(screen.getByTestId('phase-badge')).toHaveTextContent('DEBATE');
+    expect(screen.getByTestId('phase-badge')).toHaveTextContent('INTERACTION');
     expect(screen.getByTestId('decision-prompt')).toHaveTextContent('How do you escape?');
   });
 

@@ -57,7 +57,7 @@ describe('PlayerApp', () => {
     act(() =>
       FakeWebSocket.latest.receive({ type: 'state', view: { phase: 'debate', scene: null } }),
     );
-    expect(screen.getByTestId('phase-chip')).toHaveTextContent('DEBATE');
+    expect(screen.getByTestId('phase-chip')).toHaveTextContent('INTERACTION');
   });
 
   it('refreshes the sheet when the phase changes so edits show up', async () => {

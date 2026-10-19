@@ -1,7 +1,8 @@
 import type { AiJob } from '@ai-rpg/core/ai';
 import type { AiAnswer } from '@ai-rpg/core/api';
 import { useState } from 'react';
-import { type ApiError, askAi } from './api';
+import { askAi } from './api';
+import { describeApiError } from './errors';
 
 type JobType = AiJob['type'];
 type Kind = Extract<AiJob, { type: 'generate' }>['what'];
@@ -20,15 +21,6 @@ const JOBS = [
 ] as const satisfies readonly { type: JobType; label: string; hint: string; needsText: boolean }[];
 
 const KINDS = ['npc', 'quest', 'rumor', 'encounter', 'location'] as const satisfies readonly Kind[];
-
-const MESSAGES: Partial<Record<ApiError['code'], string>> = {
-  not_found: 'Import a world pack first: npm run pack:import -- story --url <your address>',
-  unavailable: 'The AI is not set up: add ANTHROPIC_API_KEY to the server secrets.',
-  declined: 'The AI declined this request. Try rephrasing it.',
-  busy: 'The AI is busy. Try again in a moment.',
-  unauthorized: 'Your session expired, log in again.',
-  network: 'Cannot reach the server.',
-};
 
 const buildJob = (type: JobType, text: string, what: Kind): AiJob => {
   const trimmed = text.trim();
@@ -73,7 +65,7 @@ export const AssistantPanel = () => {
     setBusy(false);
     if (result.status === 'success') return setAnswer(result.data);
     setAnswer(null);
-    setError(MESSAGES[result.error.code] ?? 'The AI request failed.');
+    setError(describeApiError(result.error, 'The AI request failed.'));
   };
 
   return (

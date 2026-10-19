@@ -5,7 +5,6 @@ import { PhaseIcon } from '../phase-icon';
 import { PHASES, type Phase } from '../phases';
 
 type DecisionPhase = Extract<PrompterView, { phase: 'debate' | 'answer' }>;
-type RollPhase = Extract<PrompterView, { phase: 'roll' }>;
 
 type PrompterScreenProps = {
   view: PrompterView | null;
@@ -43,34 +42,6 @@ const Transcript = ({ text }: { text: string }) => (
     {text === '' ? 'Say your answer…' : text}
   </p>
 );
-
-const RollCard = ({ view }: { view: RollPhase }) => {
-  const { label, result } = view.roll;
-  return (
-    <section className="roll" data-testid="roll">
-      <h1>{label}</h1>
-      {result && (
-        <>
-          <p className="roll-total" data-testid="roll-total">
-            {result.total}
-          </p>
-          <p
-            className="roll-outcome"
-            data-testid="roll-outcome"
-            data-success={String(result.success)}
-          >
-            {result.success ? 'SUCCESS' : 'FAILURE'}
-          </p>
-          {result.critical && (
-            <p className="roll-critical" data-testid="roll-critical">
-              Critical {result.critical}
-            </p>
-          )}
-        </>
-      )}
-    </section>
-  );
-};
 
 const MicIndicator = ({
   micError,
@@ -113,11 +84,10 @@ const Stage = ({ view }: { view: PrompterView }) => {
           <Transcript text={view.transcript} />
         </>
       );
-    case 'roll':
-      return <RollCard view={view} />;
     case 'listen':
+    case 'roll':
     case 'break':
-      return <p className="hint">{PHASES[view.phase].hint}</p>;
+      return <p className="hint">{PHASES.listen.hint}</p>;
   }
 };
 
