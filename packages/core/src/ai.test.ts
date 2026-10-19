@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { type AiJob, ASSISTANT_RULES, jobPrompt, parseAiJob, worldContext } from './ai';
-import type { PackBundle } from './pack';
+import type { PackBundle, PackDocument } from './pack';
 import { testRuleset } from './test-support';
 
 const bundle: PackBundle = {
   pack: { name: 'Neon Debt', language: 'pl', summary: 'Korporacje i dlugi.' },
   ruleset: testRuleset,
   world: 'Rok 2187. Helix Dynamics rzadzi miastem.',
+  images: [],
   documents: [
     {
       kind: 'npc',
@@ -182,5 +183,53 @@ describe('jobPrompt', () => {
     { type: 'ask', question: 'x' },
   ])('names the answer language for %j', (job) => {
     expect(jobPrompt(job, '', 'pl')).toContain('Answer in pl');
+  });
+});
+
+describe('story graph in the prompt', () => {
+  const scene: PackDocument = {
+    kind: 'quest',
+    slug: 'gate',
+    title: 'The gate',
+    tags: [],
+    secret: false,
+    links: [],
+    body: 'Guard.',
+    node: {
+      readAloud: 'Fog.',
+      image: null,
+      requires: ['dock_open'],
+      interaction: null,
+      outcomes: [
+        { id: 'bribe', label: 'Bribe', text: '', sets: ['gate_open'], image: null },
+        { id: 'fight', label: 'Fight', text: '', sets: [], image: null },
+      ],
+    },
+  };
+
+  it('shows requirements and outcomes of a scene', () => {
+    const context = worldContext({ ...bundle, documents: [scene] });
+    expect(context).toContain('requires: dock_open');
+    expect(context).toContain('  - bribe: Bribe (sets gate_open)');
+    expect(context).toContain('  - fight: Fight\n');
+  });
+
+  it('says a scene requires nothing when it is open from the start', () => {
+    const open: PackDocument = {
+      ...scene,
+      node: { readAloud: 'Fog.', image: null, requires: [], interaction: null, outcomes: [] },
+    };
+    expect(worldContext({ ...bundle, documents: [open] })).toContain('requires: nothing');
+  });
+
+  it('lists the prepared images only when there are some', () => {
+    expect(worldContext(bundle)).not.toContain('Prepared images');
+    const withImages = { ...bundle, images: [{ file: 'dock.jpg', description: 'A dock' }] };
+    expect(worldContext(withImages)).toContain('## Prepared images\n- dock.jpg: A dock');
+  });
+
+  it('tells the assistant to prefer available scenes and bridge gaps', () => {
+    expect(ASSISTANT_RULES).toContain('Prefer the available scenes');
+    expect(ASSISTANT_RULES).toContain('bridge');
   });
 });

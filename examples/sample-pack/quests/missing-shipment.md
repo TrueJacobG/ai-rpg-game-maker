@@ -4,8 +4,23 @@ tags: [main]
 links:
   - location/dock-7
   - culprit/ghost-auditor
-  - ending/the-audit
-  - ending/the-purge
+read_aloud: |
+  Rain hammers the flooded planks of Dock 7. At the far end, the vault door stands closed, and not a scratch on it. Whoever took the debt records had a key.
+image: dock-7.png
+interaction:
+  prompt: The crew arrives at the vault. Who steps forward, and what do they look at first?
+  questions:
+    - { key: who, label: Who steps forward? }
+    - { key: how, label: What do they examine? }
+outcomes:
+  - id: found_key
+    label: They find the auditor key trace
+    text: The lock log shows a valid auditor key, registered to a man who died two years ago.
+    sets: [auditor_key_traced]
+    image: vault.png
+  - id: nothing
+    label: They find nothing useful
+    text: The dock workers clam up. Mara Helix's people are already watching the crew.
 ---
 The crew is hired to find the vanished debt records.
 

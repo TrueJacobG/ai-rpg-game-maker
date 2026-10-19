@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { characterSchema } from './character';
+import { imageSchema, nodeSchema, outcomeFlag, PLAYABLE_KINDS } from './node';
 import { type ParseIssue, parseWith } from './parse';
 import type { Result } from './result';
 import { rulesetSchema } from './ruleset';
@@ -26,6 +27,7 @@ const documentSchema = z.strictObject({
   secret: z.boolean(),
   links: z.array(refSchema).max(50),
   body: z.string().max(50_000),
+  node: nodeSchema.optional(),
 });
 
 const packInfoSchema = z.strictObject({
@@ -34,12 +36,85 @@ const packInfoSchema = z.strictObject({
   summary: z.string().max(1000),
 });
 
+type Bundle = {
+  documents: z.infer<typeof documentSchema>[];
+  images: z.infer<typeof imageSchema>[];
+};
+
+const issue = (ctx: z.RefinementCtx, path: (string | number)[], message: string) =>
+  ctx.addIssue({ code: 'custom', path, message });
+
+const CREATION_FLAG = /^char:/;
+
+const addNodeIssues = (bundle: Bundle, refs: Set<string>, ctx: z.RefinementCtx) => {
+  const files = new Set(bundle.images.map((image) => image.file));
+  const flags = new Set<string>();
+  bundle.documents.forEach((doc) => {
+    doc.node?.outcomes.forEach((outcome) => {
+      flags.add(outcomeFlag(documentRef(doc), outcome.id));
+      for (const flag of outcome.sets) flags.add(flag);
+    });
+  });
+
+  const seenFiles = new Set<string>();
+  bundle.images.forEach((image, index) => {
+    if (seenFiles.has(image.file))
+      issue(ctx, ['images', index, 'file'], `Duplicate image "${image.file}"`);
+    seenFiles.add(image.file);
+  });
+
+  bundle.documents.forEach((doc, index) => {
+    const { node } = doc;
+    if (!node) return;
+    const at = ['documents', index, 'node'];
+    const ref = documentRef(doc);
+    if (!PLAYABLE_KINDS.some((kind) => kind === doc.kind)) {
+      issue(ctx, at, 'Only quests and endings can have story fields');
+    }
+    const missingImage = (file: string | null, path: (string | number)[]) => {
+      if (file !== null && !files.has(file))
+        issue(ctx, path, `Image "${file}" is not described in images/images.yaml`);
+    };
+    missingImage(node.image, [...at, 'image']);
+
+    const outcomeIds = new Set<string>();
+    node.outcomes.forEach((outcome, outcomeIndex) => {
+      if (outcomeIds.has(outcome.id))
+        issue(ctx, [...at, 'outcomes', outcomeIndex, 'id'], `Duplicate outcome "${outcome.id}"`);
+      outcomeIds.add(outcome.id);
+      missingImage(outcome.image, [...at, 'outcomes', outcomeIndex, 'image']);
+    });
+
+    const questionKeys = new Set<string>();
+    node.interaction?.questions.forEach((question, questionIndex) => {
+      if (questionKeys.has(question.key))
+        issue(
+          ctx,
+          [...at, 'interaction', 'questions', questionIndex, 'key'],
+          `Duplicate key "${question.key}"`,
+        );
+      questionKeys.add(question.key);
+    });
+
+    node.requires.forEach((flag, flagIndex) => {
+      const path = [...at, 'requires', flagIndex];
+      const known = refs.has(flag) || flags.has(flag) || CREATION_FLAG.test(flag);
+      if (flag === ref || flag.startsWith(`${ref}#`)) {
+        issue(ctx, path, 'A story node cannot require itself');
+      } else if (!known) {
+        issue(ctx, path, `Nothing sets the flag "${flag}"`);
+      }
+    });
+  });
+};
+
 const packBundleSchema = z
   .strictObject({
     pack: packInfoSchema,
     ruleset: rulesetSchema,
     world: z.string().max(100_000),
     documents: z.array(documentSchema).max(500),
+    images: z.array(imageSchema).max(200).default([]),
     characters: z.array(characterSchema).max(20),
   })
   .superRefine((bundle, ctx) => {
@@ -77,6 +152,8 @@ const packBundleSchema = z
       });
     });
 
+    addNodeIssues(bundle, known, ctx);
+
     bundle.documents.forEach((doc, index) => {
       doc.links.forEach((link, linkIndex) => {
         if (known.has(link)) return;
@@ -90,6 +167,7 @@ const packBundleSchema = z
   });
 
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
+export type { NodeImage, StoryNode } from './node';
 export type PackDocument = z.infer<typeof documentSchema>;
 export type PackBundle = z.infer<typeof packBundleSchema>;
 

@@ -29,6 +29,8 @@ export const ASSISTANT_RULES = [
   'Stay consistent with the documents. If you are unsure whether something is canon, say so instead of inventing it.',
   'Documents are linked by kind/slug. Treat the quests, clues, culprits and endings that are linked together as the prepared plot: prefer steering toward it, and say which quest, clue or ending each suggestion serves.',
   'When the players leave the prepared path, offer scenes that fit the world and gently pull them back, without railroading.',
+  'Some documents are prepared scenes with requirements and outcomes: together they form a graph. A scene is available once everything it requires has happened. Prefer the available scenes.',
+  'If no prepared scene fits, or the graph has a gap, write a bridge that connects the current situation to the nearest prepared scene or ending that the players can still reach, and name it.',
   'Be concise and concrete. Use short sections and lists.',
 ].join('\n');
 
@@ -40,14 +42,34 @@ const rulesetLines = ({ ruleset }: PackBundle): string[] => [
   `Difficulties: ${ruleset.difficulties.map((d) => `${d.key} (${d.target})`).join(', ')}`,
 ];
 
+const nodeLines = (doc: PackDocument): string[] => {
+  const { node } = doc;
+  if (!node) return [];
+  const outcomes = node.outcomes.map(
+    (outcome) =>
+      `  - ${outcome.id}: ${outcome.label}${outcome.sets.length > 0 ? ` (sets ${outcome.sets.join(', ')})` : ''}`,
+  );
+  return [
+    node.requires.length > 0 ? `requires: ${node.requires.join(', ')}` : 'requires: nothing',
+    ...(outcomes.length > 0 ? ['outcomes:', ...outcomes] : []),
+  ];
+};
+
 const documentBlock = (doc: PackDocument): string => {
   const meta = [
     doc.secret ? 'SECRET (game master only)' : null,
     doc.tags.length > 0 ? `tags: ${doc.tags.join(', ')}` : null,
     doc.links.length > 0 ? `links: ${doc.links.join(', ')}` : null,
   ].filter((entry) => entry !== null);
-  return [`### [${documentRef(doc)}] ${doc.title}`, ...meta, '', doc.body].join('\n');
+  return [`### [${documentRef(doc)}] ${doc.title}`, ...meta, ...nodeLines(doc), '', doc.body].join(
+    '\n',
+  );
 };
+
+const imageLines = ({ images }: PackBundle): string[] =>
+  images.length === 0
+    ? []
+    : ['', '## Prepared images', ...images.map((image) => `- ${image.file}: ${image.description}`)];
 
 export const worldContext = (bundle: PackBundle): string => {
   const documents =
@@ -66,6 +88,7 @@ export const worldContext = (bundle: PackBundle): string => {
     '',
     '## Documents',
     documents,
+    ...imageLines(bundle),
   ].join('\n');
 };
 

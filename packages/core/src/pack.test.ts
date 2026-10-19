@@ -36,7 +36,10 @@ describe('documentRef', () => {
 
 describe('parsePackBundle', () => {
   it('accepts a complete bundle', () => {
-    expect(parsePackBundle(bundle())).toEqual({ status: 'success', data: bundle() });
+    expect(parsePackBundle(bundle())).toEqual({
+      status: 'success',
+      data: { ...bundle(), images: [] },
+    });
   });
 
   it('accepts an empty world with no documents', () => {
@@ -179,5 +182,100 @@ describe('parsePackBundle', () => {
 
   it('rejects unknown top level fields', () => {
     expect(parsePackBundle(bundle({ extra: 1 })).status).toBe('error');
+  });
+});
+
+const playable = (overrides: Record<string, unknown> = {}) => ({
+  readAloud: 'The vault is open.',
+  image: null,
+  requires: [],
+  interaction: null,
+  outcomes: [],
+  ...overrides,
+});
+
+const quest = (slug: string, node: Record<string, unknown> = {}) =>
+  document({ kind: 'quest', slug, title: slug, secret: false, node: playable(node) });
+
+const nodeIssues = (documents: unknown[], images: unknown[] = []) =>
+  issuesOf(bundle({ documents, images })).map((issue) => `${issue.path}: ${issue.message}`);
+
+describe('story nodes', () => {
+  const outcomes = [
+    { id: 'bribe', label: 'Bribe', text: 'It works.', sets: ['dock_open'], image: null },
+    { id: 'fight', label: 'Fight', text: 'It does not.', sets: [], image: null },
+  ];
+
+  it('accepts requirements on outcomes, flags and the quests themselves', () => {
+    const documents = [
+      quest('gate', { outcomes }),
+      quest('vault', {
+        requires: ['quest/gate', 'quest/gate#bribe', 'dock_open', 'char:item_keycard'],
+      }),
+    ];
+    expect(parsePackBundle(bundle({ documents })).status).toBe('success');
+  });
+
+  it('adds an empty image catalog when none is given', () => {
+    const result = parsePackBundle(bundle());
+    expect(result.status === 'success' && result.data.images).toEqual([]);
+  });
+
+  it('rejects a requirement that nothing sets', () => {
+    expect(nodeIssues([quest('vault', { requires: ['dock_open'] })])).toEqual([
+      'documents.0.node.requires.0: Nothing sets the flag "dock_open"',
+    ]);
+  });
+
+  it('rejects a node that requires itself', () => {
+    const documents = [quest('gate', { requires: ['quest/gate'], outcomes })];
+    expect(nodeIssues(documents)).toEqual([
+      'documents.0.node.requires.0: A story node cannot require itself',
+    ]);
+  });
+
+  it('allows story fields on quests and endings only', () => {
+    const npc = document({ node: playable() });
+    expect(nodeIssues([npc])).toEqual([
+      'documents.0.node: Only quests and endings can have story fields',
+    ]);
+    const ending = document({ kind: 'ending', slug: 'purge', node: playable() });
+    expect(parsePackBundle(bundle({ documents: [ending] })).status).toBe('success');
+  });
+
+  it('rejects duplicate outcome ids and question keys', () => {
+    const interaction = {
+      prompt: 'What now?',
+      questions: [
+        { key: 'who', label: 'Who' },
+        { key: 'who', label: 'Again' },
+      ],
+    };
+    const documents = [quest('gate', { outcomes: [...outcomes, outcomes[0]], interaction })];
+    expect(nodeIssues(documents)).toEqual([
+      'documents.0.node.outcomes.2.id: Duplicate outcome "bribe"',
+      'documents.0.node.interaction.questions.1.key: Duplicate key "who"',
+    ]);
+  });
+
+  it('requires every referenced image to be described', () => {
+    const documents = [
+      quest('gate', {
+        image: 'dock.jpg',
+        outcomes: [{ ...outcomes[0], image: 'gone.png' }],
+      }),
+    ];
+    expect(nodeIssues(documents, [{ file: 'dock.jpg', description: 'A dock' }])).toEqual([
+      'documents.0.node.outcomes.0.image: Image "gone.png" is not described in images/images.yaml',
+    ]);
+  });
+
+  it('rejects duplicate image files and unsupported extensions', () => {
+    const images = [
+      { file: 'dock.jpg', description: 'A dock' },
+      { file: 'dock.jpg', description: 'Again' },
+    ];
+    expect(nodeIssues([], images)).toEqual(['images.1.file: Duplicate image "dock.jpg"']);
+    expect(nodeIssues([], [{ file: 'dock.exe', description: 'x' }])).toHaveLength(1);
   });
 });

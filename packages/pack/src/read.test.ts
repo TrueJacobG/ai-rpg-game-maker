@@ -277,3 +277,93 @@ describe('readPack characters', () => {
     ]);
   });
 });
+
+const gateQuest = `---
+title: The gate
+read_aloud: |
+  Fog rolls over the docks.
+image: dock.jpg
+requires: [quest/intro]
+interaction:
+  prompt: Who goes in?
+  questions:
+    - { key: who, label: Who }
+outcomes:
+  - id: bribe
+    label: They bribe the guard
+    text: The gate opens.
+    sets: [gate_open]
+    image: dock.jpg
+  - { id: fight, label: They fight }
+---
+Guard notes.`;
+
+const storyFiles = (extra: Record<string, string> = {}) =>
+  withFiles({
+    'quests/intro.md': '# Intro\nx',
+    'quests/gate.md': gateQuest,
+    'images/images.yaml': 'dock.jpg: A foggy dock',
+    'images/dock.jpg': '',
+    ...extra,
+  });
+
+describe('readPack story scenes', () => {
+  it('reads read-aloud text, requirements, interaction and outcomes', () => {
+    const result = readPack(storyFiles());
+    if (result.status === 'error') throw new Error(JSON.stringify(result.error));
+    const gate = result.data.documents.find((doc) => doc.slug === 'gate');
+    expect(gate?.node).toEqual({
+      readAloud: 'Fog rolls over the docks.',
+      image: 'dock.jpg',
+      requires: ['quest/intro'],
+      interaction: { prompt: 'Who goes in?', questions: [{ key: 'who', label: 'Who' }] },
+      outcomes: [
+        {
+          id: 'bribe',
+          label: 'They bribe the guard',
+          text: 'The gate opens.',
+          sets: ['gate_open'],
+          image: 'dock.jpg',
+        },
+        { id: 'fight', label: 'They fight', text: '', sets: [], image: null },
+      ],
+    });
+    expect(gate?.body).toBe('Guard notes.');
+    expect(result.data.documents.find((doc) => doc.slug === 'intro')).not.toHaveProperty('node');
+    expect(result.data.images).toEqual([{ file: 'dock.jpg', description: 'A foggy dock' }]);
+  });
+
+  it('asks for an image file that sits next to its description', () => {
+    const files = storyFiles();
+    delete files['images/dock.jpg'];
+    expect(issuesOf(files)).toEqual([
+      {
+        file: 'images/images.yaml',
+        message: 'No image file "images/dock.jpg" next to the description',
+      },
+    ]);
+  });
+
+  it('rejects a catalog that is not "file: description" lines', () => {
+    expect(issuesOf(storyFiles({ 'images/images.yaml': '- dock.jpg' }))).toEqual([
+      { file: 'images/images.yaml', message: 'Use "file name: description" lines' },
+    ]);
+  });
+
+  it('points at the document with an unknown flag or image', () => {
+    const files = storyFiles({
+      'quests/gate.md': gateQuest
+        .replace('quest/intro', 'ghost_flag')
+        .replace('dock.jpg\nrequires', 'gone.png\nrequires'),
+    });
+    expect(issuesOf(files).map((issue) => `${issue.file} ${issue.message}`)).toEqual([
+      'quests/gate.md node.image: Image "gone.png" is not described in images/images.yaml',
+      'quests/gate.md node.requires.0: Nothing sets the flag "ghost_flag"',
+    ]);
+  });
+
+  it('rejects a typo in the story front matter', () => {
+    const files = storyFiles({ 'quests/gate.md': gateQuest.replace('requires:', 'require:') });
+    expect(issuesOf(files)[0]?.file).toBe('quests/gate.md');
+  });
+});
