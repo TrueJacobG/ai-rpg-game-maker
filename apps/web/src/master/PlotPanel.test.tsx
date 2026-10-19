@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
@@ -146,5 +146,62 @@ describe('PlotPanel', () => {
     );
     render(<PlotPanel />);
     expect(await screen.findByTestId('plot-hint')).toHaveTextContent(message);
+  });
+});
+
+describe('PlotPanel reset', () => {
+  it('asks twice and then clears everything', async () => {
+    serve({ 'quest/missing-shipment': 'resolved', 'culprit/ghost-auditor': 'discovered' });
+    let cleared = 0;
+    server.use(
+      http.delete('/api/master/plot', () => {
+        cleared += 1;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const user = userEvent.setup();
+    render(<PlotPanel />);
+    await screen.findByTestId('plot-quest/missing-shipment');
+
+    await user.click(screen.getByTestId('plot-reset'));
+    expect(cleared).toBe(0);
+    await user.click(screen.getByTestId('plot-reset-confirm'));
+
+    await waitFor(() => expect(cleared).toBe(1));
+    const quest = screen.getByTestId('plot-quest/missing-shipment');
+    expect(within(quest).getByRole('button', { name: 'Not yet' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.queryByTestId('plot-reset-confirm')).not.toBeInTheDocument();
+  });
+
+  it('can back out', async () => {
+    serve({ 'quest/missing-shipment': 'resolved' });
+    const user = userEvent.setup();
+    render(<PlotPanel />);
+    await screen.findByTestId('plot-quest/missing-shipment');
+
+    await user.click(screen.getByTestId('plot-reset'));
+    await user.click(screen.getByTestId('plot-reset-cancel'));
+    expect(screen.getByTestId('plot-reset')).toBeInTheDocument();
+  });
+
+  it('keeps the plot and says so when resetting fails', async () => {
+    serve({ 'quest/missing-shipment': 'resolved' });
+    server.use(http.delete('/api/master/plot', () => new HttpResponse(null, { status: 500 })));
+    const user = userEvent.setup();
+    render(<PlotPanel />);
+    await screen.findByTestId('plot-quest/missing-shipment');
+
+    await user.click(screen.getByTestId('plot-reset'));
+    await user.click(screen.getByTestId('plot-reset-confirm'));
+
+    expect(await screen.findByTestId('plot-error')).toHaveTextContent('Could not reset');
+    const quest = screen.getByTestId('plot-quest/missing-shipment');
+    expect(within(quest).getByRole('button', { name: 'Done' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 });

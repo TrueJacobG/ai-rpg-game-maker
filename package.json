@@ -24,5 +24,18 @@
   "workspaces": [
     "apps/*",
     "packages/*"
+  ],
+  "description": "Open-source framework for running a tabletop RPG as the game master, on Cloudflare Workers",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TrueJacobG/ai-rpg-game-maker.git"
+  },
+  "keywords": [
+    "rpg",
+    "tabletop",
+    "game-master",
+    "cloudflare-workers",
+    "ai"
   ]
 }

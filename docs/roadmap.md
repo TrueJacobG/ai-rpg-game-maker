@@ -4,24 +4,28 @@
 
 ## Built
 
-- Core: dice, d20 checks with advantage and disadvantage, ruleset, characters, the table state machine, world pack format.
-- Worker on Cloudflare: master login, characters with player QR links, tablet pairing, realtime room (WebSockets), world pack storage, story log, AI assistant.
-- Plot panel: mark quests, culprits and endings as found or done; the assistant sees it.
-- Web app: tablet prompter (phase icon, LISTENING indicator, speech to text), player phone page, master panel (table control, characters and QR codes, tablet pairing, dice, assistant, story log).
-- CLI: `pack:check` and `pack:import`.
-- One-command deploy to your own Cloudflare account, see [deploy.md](deploy.md).
+- **Table loop:** phases (Listen, Debate, Answer, Roll, Break), decisions with slots, review and "another try", realtime sync between laptop, tablet and phones.
+- **Tablet:** corner phase icon, loud LISTENING screen, Polish or English speech to text, screen kept awake, full screen.
+- **Characters:** sheets, QR links for phones, hit point buttons, rolls from stats and the pack's ruleset.
+- **World packs:** Markdown and YAML format, `pack:check`, `pack:import`, starter characters.
+- **Assistant:** next beat, bridge scenes, creating NPCs and quests, recaps, questions about the canon, with the story log and plot state as context.
+- **Operations:** one-command setup and deploy, rate limiting, D1 migrations.
+- **Skill** `story-to-pack` for converting raw stories.
 
 ## Not tested for real yet
 
-- A full session on a real Android tablet with real speech recognition.
-- The first real call to the Anthropic API.
-- `docs/deploy.md` end to end on a real Cloudflare account.
+- A full session on a real Android tablet with real speech recognition, in Polish.
+- The first real Anthropic call and its cost.
+- How well the assistant steers with a real story.
+
+## Decided, not built
+
+- **Map and scene images, AI generated.** Where the party is, and art for scenes and quests. Needs a design session: provider, cost, and storage (R2).
 
 ## Not designed yet
 
-- **Map**: where the party is. Needs a decision between an uploaded image with pins, a generated map, or a hex or tile map.
-- **Image generation** for quests and scenes, and where the images are stored (R2).
-- **Story visualization**: a timeline or a graph of quests, clues, culprits and endings with the party's progress.
-- **Gamification**: XP, achievements, faction reputation.
+- **Story visualization:** a timeline or graph of quests, clues, culprits and endings with progress.
+- **Gamification:** XP, achievements, faction reputation.
 - **Decisions from player phones** and per-player decisions.
-- Optional free speech-to-text and AI backends on Workers AI.
+- The assistant ticking decision slots from what players said.
+- Free speech-to-text and AI backends on Workers AI.

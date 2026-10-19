@@ -1,6 +1,6 @@
 # World pack
 
-**Status: WIP. The format is implemented, validated and importable. The AI that reads the pack comes next.**
+**Status: built.** The format is validated by `npm run pack:check`, importable, and read by the assistant.
 
 The framework is generic. Everything that makes a game specific lives in a world pack: a folder of Markdown and YAML files. Your private pack goes in `story/` (git-ignored). `examples/sample-pack/` is a small public one to copy from. Story text can be in any language; the format only needs ASCII file names.
 
@@ -81,7 +81,18 @@ difficulties:
   - { key: routine, label: Routine, target: 10 }
 ```
 
-Keys use lowercase letters, digits and `_`. Keys referenced by characters must exist here (a character's `skills` use the same keys).
+Keys use lowercase letters, digits and `_`. Every attribute and skill key used by a starter character must exist here; the check reports the ones that do not.
+
+## Writing a pack that plays well
+
+- **Size is cost.** The whole pack is sent to the assistant with every question. Aim for under about 150 000 characters in total (roughly 40 000 tokens); the hard limits are 500 documents, 50 000 characters each and 1.5 MB overall. Summarise a long source instead of pasting it.
+- **Mark secrets.** `secret: true` is for what the players must not learn yet. The assistant knows about secrets and is told not to reveal them.
+- **Wire the plot with links.** Every quest should link its locations, culprits and endings; every culprit should link where its clues are.
+- **Be concrete.** Short bodies with names, wants, hidden things and clues work better than atmosphere.
+
+## Converting an existing story
+
+A PDF, a published module or loose notes do not fit this format as they are. The repository ships a Claude Code skill for the conversion: `.claude/skills/story-to-pack/SKILL.md`. Put the source in `story/`, open Claude Code in this repository and ask it to prepare your story. The skill reads the source in pieces, proposes an outline for your approval, maps the rules onto the d20 ruleset, writes the files, runs the check until it passes and reviews the plot wiring with you. It never invents canon: gaps become questions to you.
 
 ## Checking a pack
 
@@ -103,4 +114,4 @@ The pack is stored as one JSON row in the game's database, so the limit is 1.5 M
 
 ## Plot graph
 
-Endings, culprits, quests and the clues between them are not a separate format: they are documents of those kinds connected by `links`. The AI reads the whole graph, see [ai.md](ai.md).
+Endings, culprits, quests and the clues between them are not a separate format: they are documents of those kinds connected by `links`. The assistant reads the whole graph, and the Plot panel in the master view tracks which parts the players have found or finished. See [ai.md](ai.md).

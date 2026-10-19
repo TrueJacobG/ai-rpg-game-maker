@@ -1,6 +1,6 @@
 # Architecture
 
-**Status: WIP. Describes what is built.**
+**Status: built.** Describes how the project is put together today.
 
 ## Goals
 
@@ -31,6 +31,8 @@ apps/worker     Worker, Durable Object, D1 migrations
 packages/core   Zod schemas, dice, d20 checks, session state machine, pack format, AI prompts
 packages/pack   Reads a world pack folder, the pack:check and pack:import commands
 examples/       Sample world pack
+scripts/        The guided setup command
+.claude/skills/ Claude Code skills (story-to-pack)
 story/          Your private pack (git-ignored)
 docs/           These files
 ```
