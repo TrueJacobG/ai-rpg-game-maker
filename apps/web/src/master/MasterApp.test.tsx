@@ -6,6 +6,8 @@ import { FakeWebSocket } from '../test-fakes';
 import { server } from '../test-server';
 import { MasterApp } from './MasterApp';
 
+const emptyStory = { current: null, available: [], locked: [], resolved: [], flags: [] };
+
 const signedIn = () =>
   server.use(http.get('/api/master/me', () => HttpResponse.json({ role: 'master' })));
 const signedOut = () =>
@@ -20,6 +22,7 @@ beforeEach(() => {
     http.get('/api/master/pack/ruleset', () => new HttpResponse(null, { status: 404 })),
     http.get('/api/master/pack/documents', () => new HttpResponse(null, { status: 404 })),
     http.get('/api/master/plot', () => HttpResponse.json({})),
+    http.get('/api/master/story', () => HttpResponse.json(emptyStory)),
   );
 });
 
@@ -98,18 +101,42 @@ describe('MasterApp', () => {
     expect(FakeWebSocket.latest.url).toContain('/api/master/ws');
   });
 
-  it('shows the tablet, characters and dice next to the table', async () => {
+  it('keeps dice and the assistant on the story screen', async () => {
     signedIn();
     render(<MasterApp />);
-    expect(await screen.findByTestId('pairing-create')).toBeInTheDocument();
-    expect(await screen.findByTestId('character-new')).toBeInTheDocument();
-    expect(screen.getByTestId('dice-roll')).toBeInTheDocument();
+    expect(await screen.findByTestId('dice-roll')).toBeInTheDocument();
     expect(screen.getByTestId('ai-ask')).toBeInTheDocument();
-    expect(await screen.findByTestId('party-empty')).toBeInTheDocument();
-    expect(await screen.findByTestId('log-empty')).toBeInTheDocument();
+    expect(await screen.findByTestId('scenes-empty')).toBeInTheDocument();
   });
 
-  it('refreshes the party and the stat rolls when characters are added', async () => {
+  it('keeps the tablet, characters, plot and log on the dashboard', async () => {
+    signedIn();
+    const user = userEvent.setup();
+    render(<MasterApp />);
+
+    await user.click(await screen.findByTestId('tab-dashboard'));
+
+    expect(await screen.findByTestId('pairing-create')).toBeInTheDocument();
+    expect(await screen.findByTestId('character-new')).toBeInTheDocument();
+    expect(await screen.findByTestId('party-empty')).toBeInTheDocument();
+    expect(await screen.findByTestId('log-empty')).toBeInTheDocument();
+    expect(await screen.findByTestId('story-progress')).toBeInTheDocument();
+    expect(screen.queryByTestId('dice-roll')).not.toBeInTheDocument();
+  });
+
+  it('keeps the table connection while switching between the tabs', async () => {
+    signedIn();
+    const user = userEvent.setup();
+    render(<MasterApp />);
+    await waitFor(() => expect(FakeWebSocket.instances).toHaveLength(1));
+
+    await user.click(await screen.findByTestId('tab-dashboard'));
+    await user.click(screen.getByTestId('tab-story'));
+
+    expect(FakeWebSocket.instances).toHaveLength(1);
+  });
+
+  it('refreshes the party when characters are added', async () => {
     signedIn();
     const kiraId = '3f2b8c1e-8d4a-4f6e-9a7b-1c2d3e4f5a6b';
     const kira = {
@@ -121,23 +148,10 @@ describe('MasterApp', () => {
       abilities: [],
       secrets: [],
     };
-    server.use(
-      http.get('/api/master/pack/ruleset', () =>
-        HttpResponse.json({
-          attributes: [{ key: 'body', label: 'Body' }],
-          skills: [],
-          difficulties: [{ key: 'routine', label: 'Routine', target: 10 }],
-        }),
-      ),
-    );
     const user = userEvent.setup();
     render(<MasterApp />);
+    await user.click(await screen.findByTestId('tab-dashboard'));
     await screen.findByTestId('party-empty');
-    await waitFor(() => expect(FakeWebSocket.instances).toHaveLength(1));
-    act(() =>
-      FakeWebSocket.latest.receive({ type: 'state', view: { phase: 'listen', scene: null } }),
-    );
-    expect(await screen.findByTestId('check-hint')).toHaveTextContent('Add a character');
 
     server.use(
       http.post('/api/master/pack/characters', () =>
@@ -158,7 +172,6 @@ describe('MasterApp', () => {
     await user.click(screen.getByTestId('pack-characters'));
 
     expect(await screen.findByTestId(`party-hp-${kiraId}`)).toHaveTextContent('8 / 10');
-    expect(await screen.findByTestId('check-character')).toBeInTheDocument();
   });
 
   it('logs out and returns to the password form', async () => {

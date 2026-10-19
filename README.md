@@ -6,10 +6,10 @@ An open-source framework for running a tabletop RPG as the game master, built fo
 
 ## How a session looks
 
-- **Laptop, the game master (`/master`):** start decisions, open the microphone, roll checks from character stats, change hit points, track the plot, ask the assistant what should happen next.
-- **Tablet, the prompter (`/prompter`):** shows the whole table which phase it is (Listen, Debate, Answer, Roll, Break) and listens when the players answer, with an unmistakable LISTENING screen.
+- **Laptop, the game master (`/master`):** read the scene, start the interaction, open the microphone, confirm what the AI understood, roll dice, track the plot and ask the assistant what should happen next.
+- **Tablet, the prompter (`/prompter`):** shows the scene's picture and the questions to the players, and listens when they answer, with an unmistakable LISTENING screen.
 - **Phones, one per player (`/p/<token>`):** scan a QR code, read your own character. No login.
-- **Your story:** a folder of Markdown and YAML called a *world pack*. It is yours and is never part of this repository.
+- **Your story:** a folder of Markdown and YAML called a *world pack*: scenes with requirements and outcomes, characters, pictures. It is yours and is never part of this repository.
 
 ## Get started
 

@@ -1,5 +1,5 @@
 import { PhaseIcon } from './phase-icon';
-import { PHASES, type Phase } from './phases';
+import { PHASES, ROUND } from './phases';
 
 const SOURCE = 'https://github.com/TrueJacobG/ai-rpg-game-maker';
 const SETUP = `${SOURCE}#get-started`;
@@ -75,13 +75,13 @@ const DEVICES = [
     kind: 'laptop',
     name: 'The game master',
     path: '/master',
-    text: 'Start a decision, roll a check from a character’s stats, move hit points, tick off what the players have found. Ask the assistant what could happen next.',
+    text: 'Read the scene, start the interaction, open the microphone. The assistant works out what the players decided and you confirm it. Roll dice, follow the plot, ask what could happen next.',
   },
   {
     kind: 'tablet',
     name: 'The prompter',
     path: '/prompter',
-    text: 'Lies in the middle of the table. A stamp in the corner always says what to do now, and while the microphone is open the whole screen turns red so nobody forgets.',
+    text: 'Lies in the middle of the table and shows the scene. A stamp in the corner says what to do now, and while the microphone is open the whole screen turns red so nobody forgets.',
   },
   {
     kind: 'phone',
@@ -94,7 +94,7 @@ const DEVICES = [
 const FEATURES = [
   {
     title: 'A tablet that listens',
-    text: 'It lies on the table and always shows what to do now: listen, debate, answer, roll, break. While the microphone is open the screen turns red. What the players say is written out for the game master, who confirms it before the story moves on.',
+    text: 'It lies on the table, shows the picture of the scene and puts the questions to the players. While the microphone is open the screen turns red. The AI works out who decided what, and the game master confirms it before the story moves on.',
   },
   {
     title: 'Characters on phones',
@@ -102,7 +102,7 @@ const FEATURES = [
   },
   {
     title: 'Real dice, your rules',
-    text: 'Checks roll a d20 plus an attribute and a skill against a difficulty, with advantage and disadvantage. The attributes, skills and difficulties are yours to define, so it fits fantasy as well as science fiction.',
+    text: 'Roll your own die of any size with a button, or type in what a player rolled on a real one. The story decides what the number means, so it fits fantasy as well as science fiction.',
   },
   {
     title: 'An assistant that knows your plot',
@@ -225,9 +225,9 @@ export const Home = () => (
       </section>
 
       <section className="home-section">
-        <h2 className="section-label">A round, in five stamps</h2>
+        <h2 className="section-label">A round, in three stamps</h2>
         <ol className="round" data-testid="home-round">
-          {(Object.keys(PHASES) as Phase[]).map((phase, index) => (
+          {ROUND.map((phase, index) => (
             <li key={phase} data-phase={phase}>
               <span className="step">{String(index + 1).padStart(2, '0')}</span>
               <PhaseIcon phase={phase} />

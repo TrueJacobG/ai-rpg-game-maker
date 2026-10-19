@@ -6,6 +6,8 @@ import {
   interpretPrompt,
   parseInterpretation,
   parseInterpretRequest,
+  parseInterpretResponse,
+  parseStoryView,
   resolutionFlags,
   storyBrief,
   storyView,
@@ -101,8 +103,8 @@ describe('storyView', () => {
       image: imageUrl('dock.jpg'),
       interaction,
       outcomes: [
-        { id: 'bribe', label: 'Label bribe', text: 'Text bribe' },
-        { id: 'fight', label: 'Label fight', text: 'Text fight' },
+        { id: 'bribe', label: 'Label bribe', text: 'Text bribe', image: null },
+        { id: 'fight', label: 'Label fight', text: 'Text fight', image: null },
       ],
     });
   });
@@ -269,5 +271,38 @@ describe('interpretation', () => {
       status: 'success',
       data: { answers: {}, missing: [], outcome: null },
     });
+  });
+});
+
+describe('response parsers', () => {
+  it('round-trips the story view', () => {
+    const view = storyView(story(), ['quest/gate'], 'quest/vault');
+    expect(parseStoryView(JSON.parse(JSON.stringify(view)))).toEqual({
+      status: 'success',
+      data: view,
+    });
+    expect(parseStoryView({ current: null }).status).toBe('error');
+  });
+
+  it('gives outcome pictures their url', () => {
+    const withPicture = build([
+      doc('quest', 'gate', { outcomes: [outcome('bribe', [], 'dock.jpg')] }),
+    ]);
+    const view = storyView(withPicture, [], 'quest/gate');
+    expect(view.current?.outcomes[0]?.image).toBe(imageUrl('dock.jpg'));
+  });
+
+  it('reads an interpretation response with its usage', () => {
+    const response = {
+      answers: { who: 'Kai' },
+      missing: ['how'],
+      outcome: null,
+      image: null,
+      reason: '',
+      model: 'm',
+      usage: { inputTokens: 1, outputTokens: 2, cacheReadTokens: 3, cacheWriteTokens: 4 },
+    };
+    expect(parseInterpretResponse(response)).toEqual({ status: 'success', data: response });
+    expect(parseInterpretResponse({ ...response, usage: 5 }).status).toBe('error');
   });
 });

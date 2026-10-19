@@ -6,21 +6,41 @@ import { failure, type Result, success } from './result';
 
 type PlayableDocument = PackDocument & { node: StoryNode };
 
-export type NodeSummary = { ref: string; kind: string; title: string };
-export type LockedNode = NodeSummary & { missing: string[] };
-export type CurrentNode = NodeSummary & {
-  readAloud: string;
-  image: string | null;
-  interaction: StoryNode['interaction'];
-  outcomes: { id: string; label: string; text: string }[];
-};
-export type StoryView = {
-  current: CurrentNode | null;
-  available: NodeSummary[];
-  locked: LockedNode[];
-  resolved: NodeSummary[];
-  flags: string[];
-};
+const summarySchema = z.strictObject({ ref: z.string(), kind: z.string(), title: z.string() });
+
+const currentNodeSchema = summarySchema.extend({
+  readAloud: z.string(),
+  image: z.string().nullable(),
+  interaction: z
+    .strictObject({
+      prompt: z.string(),
+      questions: z.array(z.strictObject({ key: z.string(), label: z.string() })),
+    })
+    .nullable(),
+  outcomes: z.array(
+    z.strictObject({
+      id: z.string(),
+      label: z.string(),
+      text: z.string(),
+      image: z.string().nullable(),
+    }),
+  ),
+});
+
+const storyViewSchema = z.strictObject({
+  current: currentNodeSchema.nullable(),
+  available: z.array(summarySchema),
+  locked: z.array(summarySchema.extend({ missing: z.array(z.string()) })),
+  resolved: z.array(summarySchema),
+  flags: z.array(z.string()),
+});
+
+export type NodeSummary = z.infer<typeof summarySchema>;
+export type CurrentNode = z.infer<typeof currentNodeSchema>;
+export type StoryView = z.infer<typeof storyViewSchema>;
+
+export const parseStoryView = (input: unknown): Result<StoryView, ParseIssue[]> =>
+  parseWith(storyViewSchema, input);
 
 export type ResolveError = { code: 'unknown_node' } | { code: 'unknown_outcome' };
 
@@ -49,7 +69,12 @@ const currentNode = (doc: PlayableDocument): CurrentNode => ({
   readAloud: doc.node.readAloud,
   image: doc.node.image === null ? null : imageUrl(doc.node.image),
   interaction: doc.node.interaction,
-  outcomes: doc.node.outcomes.map(({ id, label, text }) => ({ id, label, text })),
+  outcomes: doc.node.outcomes.map(({ id, label, text, image }) => ({
+    id,
+    label,
+    text,
+    image: image === null ? null : imageUrl(image),
+  })),
 });
 
 export const storyView = (
@@ -147,13 +172,29 @@ export type InterpretRequest = z.infer<typeof interpretRequestSchema>;
 export const parseInterpretRequest = (input: unknown): Result<InterpretRequest, ParseIssue[]> =>
   parseWith(interpretRequestSchema, input);
 
-export type Interpretation = {
-  answers: Record<string, string>;
-  missing: string[];
-  outcome: string | null;
-  image: string | null;
-  reason: string;
-};
+const interpretationSchema = z.strictObject({
+  answers: z.record(z.string(), z.string()),
+  missing: z.array(z.string()),
+  outcome: z.string().nullable(),
+  image: z.string().nullable(),
+  reason: z.string(),
+});
+
+const interpretResponseSchema = interpretationSchema.extend({
+  model: z.string(),
+  usage: z.strictObject({
+    inputTokens: z.number().int(),
+    outputTokens: z.number().int(),
+    cacheReadTokens: z.number().int(),
+    cacheWriteTokens: z.number().int(),
+  }),
+});
+
+export type Interpretation = z.infer<typeof interpretationSchema>;
+export type InterpretResponse = z.infer<typeof interpretResponseSchema>;
+
+export const parseInterpretResponse = (input: unknown): Result<InterpretResponse, ParseIssue[]> =>
+  parseWith(interpretResponseSchema, input);
 
 const rawInterpretationSchema = z.object({
   answers: z.record(z.string(), z.string()).default({}),

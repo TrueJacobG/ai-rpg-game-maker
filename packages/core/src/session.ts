@@ -45,6 +45,7 @@ export const sessionEventSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('update_transcript'), text: z.string().max(5000) }),
   z.strictObject({ type: z.literal('close_mic') }),
   z.strictObject({ type: z.literal('accept') }),
+  z.strictObject({ type: z.literal('cancel_decision') }),
   z.strictObject({ type: z.literal('retry'), missing: z.array(keySchema).max(10) }),
   z.strictObject({ type: z.literal('start_roll'), roll: rollViewSchema }),
   z.strictObject({ type: z.literal('end_roll') }),
@@ -131,7 +132,11 @@ const fromListen = (state: StateOf<'listen'>, event: SessionEvent): Transition =
   }
 };
 
+const backToScene = (state: SessionState): Transition =>
+  success({ phase: 'listen', scene: state.scene });
+
 const fromDebate = (state: StateOf<'debate'>, event: SessionEvent): Transition => {
+  if (event.type === 'cancel_decision') return backToScene(state);
   if (event.type !== 'open_mic') return invalid(state, event);
   return success({ ...state, phase: 'answer', transcript: '' });
 };
@@ -140,6 +145,8 @@ const fromAnswer = (state: StateOf<'answer'>, event: SessionEvent): Transition =
   switch (event.type) {
     case 'update_transcript':
       return success({ ...state, transcript: event.text });
+    case 'cancel_decision':
+      return backToScene(state);
     case 'close_mic':
       return success({
         phase: 'review',
@@ -166,16 +173,14 @@ const retry = (state: StateOf<'review'>, missing: string[]): Transition => {
 const fromReview = (state: StateOf<'review'>, event: SessionEvent): Transition => {
   switch (event.type) {
     case 'accept':
-      return success({ phase: 'listen', scene: state.scene });
+    case 'cancel_decision':
+      return backToScene(state);
     case 'retry':
       return retry(state, event.missing);
     default:
       return invalid(state, event);
   }
 };
-
-const backToListen = (state: StateOf<'roll'> | StateOf<'break'>): Transition =>
-  success({ phase: 'listen', scene: state.scene });
 
 export const transition = (state: SessionState, event: SessionEvent): Transition => {
   switch (state.phase) {
@@ -188,8 +193,8 @@ export const transition = (state: SessionState, event: SessionEvent): Transition
     case 'review':
       return fromReview(state, event);
     case 'roll':
-      return event.type === 'end_roll' ? backToListen(state) : invalid(state, event);
+      return event.type === 'end_roll' ? backToScene(state) : invalid(state, event);
     case 'break':
-      return event.type === 'end_break' ? backToListen(state) : invalid(state, event);
+      return event.type === 'end_break' ? backToScene(state) : invalid(state, event);
   }
 };

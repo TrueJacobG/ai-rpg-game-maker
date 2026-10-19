@@ -26,6 +26,12 @@ import type { Character } from '@ai-rpg/core/character';
 import type { PlotStatus } from '@ai-rpg/core/plot';
 import { failure, type Result, success } from '@ai-rpg/core/result';
 import { parseRuleset, type Ruleset } from '@ai-rpg/core/ruleset';
+import {
+  type InterpretResponse,
+  parseInterpretResponse,
+  parseStoryView,
+  type StoryView,
+} from '@ai-rpg/core/story';
 
 export type ApiError = {
   code:
@@ -159,3 +165,29 @@ export const setPlotStatus = (ref: string, status: PlotStatus): Promise<ApiResul
 
 export const clearPlot = (): Promise<ApiResult<undefined>> =>
   readNothing('DELETE', '/api/master/plot');
+
+export const getStory = (): Promise<ApiResult<StoryView>> =>
+  readJson('GET', '/api/master/story', parseStoryView);
+
+export const setCurrentScene = (ref: string | null): Promise<ApiResult<StoryView>> =>
+  readJson('PUT', '/api/master/story/current', parseStoryView, { ref });
+
+export const resolveScene = (ref: string, outcome: string | null): Promise<ApiResult<StoryView>> =>
+  readJson('POST', '/api/master/story/resolve', parseStoryView, { ref, outcome });
+
+export const interpretSpeech = (
+  ref: string,
+  transcript: string,
+): Promise<ApiResult<InterpretResponse>> =>
+  readJson('POST', '/api/master/ai/interpret', parseInterpretResponse, { ref, transcript });
+
+const flagPath = (flag: string) => `/api/master/story/flags/${encodeURIComponent(flag)}`;
+
+export const setFlag = (flag: string): Promise<ApiResult<undefined>> =>
+  readNothing('PUT', flagPath(flag));
+
+export const removeFlag = (flag: string): Promise<ApiResult<undefined>> =>
+  readNothing('DELETE', flagPath(flag));
+
+export const resetStory = (): Promise<ApiResult<undefined>> =>
+  readNothing('DELETE', '/api/master/story');

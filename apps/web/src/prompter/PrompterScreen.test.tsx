@@ -1,5 +1,5 @@
 import type { PrompterView } from '@ai-rpg/core/realtime';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { PrompterScreen } from './PrompterScreen';
 
@@ -46,7 +46,7 @@ const show = (
 describe('PrompterScreen phase badge', () => {
   it.each([
     ['listen', 'LISTEN'],
-    ['debate', 'DEBATE'],
+    ['debate', 'INTERACTION'],
     ['answer', 'ANSWER'],
     ['roll', 'ROLL'],
     ['break', 'BREAK'],
@@ -127,32 +127,14 @@ describe('PrompterScreen content', () => {
     expect(screen.queryByTestId('scene')).not.toBeInTheDocument();
   });
 
-  it('shows who rolled and the outcome', () => {
-    show(views.roll);
-    const roll = screen.getByTestId('roll');
-    expect(within(roll).getByText('Kira rolls Reflex')).toBeInTheDocument();
-    expect(within(roll).getByTestId('roll-total')).toHaveTextContent('20');
-    expect(within(roll).getByTestId('roll-outcome')).toHaveTextContent('SUCCESS');
-  });
-
-  it('shows a failed roll and a critical result', () => {
-    show({
-      phase: 'roll',
-      scene: null,
-      roll: {
-        label: 'Doc rolls Mind',
-        result: { natural: 1, total: 2, target: 15, success: false, critical: 'failure' },
-      },
-    });
-    expect(screen.getByTestId('roll-outcome')).toHaveTextContent('FAILURE');
-    expect(screen.getByTestId('roll-critical')).toHaveTextContent('Critical failure');
-  });
-
-  it('shows only the label while the roll is pending', () => {
-    show({ phase: 'roll', scene: null, roll: { label: 'Kira rolls Reflex', result: null } });
-    expect(screen.getByTestId('roll')).toHaveTextContent('Kira rolls Reflex');
-    expect(screen.queryByTestId('roll-total')).not.toBeInTheDocument();
-  });
+  it.each(['roll', 'break'] as const)(
+    'falls back to the story hint for the retired %s phase',
+    (phase) => {
+      show(views[phase]);
+      expect(screen.getByText('The master is telling the story')).toBeInTheDocument();
+      expect(screen.queryByTestId('roll')).not.toBeInTheDocument();
+    },
+  );
 });
 
 describe('PrompterScreen connection', () => {

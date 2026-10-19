@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { Home } from './Home';
-import { PHASES } from './phases';
+import { PHASES, ROUND } from './phases';
 
 describe('Home', () => {
   it('sells the framework: what it is and how to set it up yourself', () => {
@@ -50,9 +50,9 @@ describe('Home', () => {
     const labels = within(screen.getByTestId('home-round'))
       .getAllByRole('listitem')
       .map((item) => item.textContent ?? '');
-    expect(labels).toHaveLength(Object.keys(PHASES).length);
-    Object.values(PHASES).forEach((phase, index) => {
-      expect(labels[index]).toContain(phase.label);
+    expect(labels).toHaveLength(ROUND.length);
+    ROUND.forEach((phase, index) => {
+      expect(labels[index]).toContain(PHASES[phase].label);
     });
   });
 

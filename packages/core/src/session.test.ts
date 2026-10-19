@@ -112,6 +112,31 @@ describe('decision flow', () => {
   });
 });
 
+describe('cancel_decision', () => {
+  const scene = apply(initialSession, { type: 'set_scene', image: 'docks.png' });
+  const debating = apply(scene, { type: 'start_decision', decision });
+  const answering = apply(debating, { type: 'open_mic' });
+  const reviewing = apply(answering, { type: 'close_mic' });
+
+  it.each([
+    ['debate', debating],
+    ['answer', answering],
+    ['review', reviewing],
+  ])('drops the decision from %s and keeps the scene', (_phase, state) => {
+    expect(apply(state, { type: 'cancel_decision' })).toEqual({
+      phase: 'listen',
+      scene: 'docks.png',
+    });
+  });
+
+  it('is not possible when nothing is going on', () => {
+    expect(transition(scene, { type: 'cancel_decision' })).toEqual({
+      status: 'error',
+      error: { code: 'invalid_transition', phase: 'listen', event: 'cancel_decision' },
+    });
+  });
+});
+
 describe('invalid transitions', () => {
   const debating = apply(initialSession, { type: 'start_decision', decision });
   const answering = apply(debating, { type: 'open_mic' });

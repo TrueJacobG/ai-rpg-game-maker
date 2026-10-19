@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react';
-import { AssistantPanel } from './AssistantPanel';
-import { CharactersPanel } from './CharactersPanel';
-import { DicePanel } from './DicePanel';
+import { Console } from './Console';
 import { LoginForm } from './LoginForm';
-import { PartyPanel } from './PartyPanel';
-import { PlotPanel } from './PlotPanel';
-import { PartyVersionProvider } from './party-version';
-import { StoryLogPanel } from './StoryLogPanel';
-import { TableControl } from './TableControl';
-import { TabletPanel } from './TabletPanel';
 
 type Session = 'checking' | 'in' | 'out';
 
@@ -28,28 +20,5 @@ export const MasterApp = () => {
 
   if (session === 'checking') return <p className="hint">Loading…</p>;
   if (session === 'out') return <LoginForm onLoggedIn={() => setSession('in')} />;
-  return (
-    <main className="master">
-      <div className="topbar">
-        <h1>Game master</h1>
-        <button type="button" data-testid="logout" onClick={logout}>
-          Log out
-        </button>
-      </div>
-      <PartyVersionProvider>
-        <div className="dashboard">
-          <TableControl />
-          <aside>
-            <AssistantPanel />
-            <PlotPanel />
-            <StoryLogPanel />
-            <PartyPanel />
-            <TabletPanel />
-            <CharactersPanel />
-            <DicePanel />
-          </aside>
-        </div>
-      </PartyVersionProvider>
-    </main>
-  );
+  return <Console onLogout={logout} />;
 };

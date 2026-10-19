@@ -4,9 +4,11 @@
 
 ## Built
 
-- **Table loop:** phases (Listen, Debate, Answer, Roll, Break), decisions with slots, review and "another try", realtime sync between laptop, tablet and phones.
+- **Table loop:** phases (Listen, Interaction, Answer), scene interactions with questions, review and "ask again", realtime sync between laptop, tablet and phones.
+- **Story graph:** scenes with requirements, outcomes and flags in the world pack; the console plays them, the AI reads what the players said and proposes the outcome; images prepared with the story.
 - **Tablet:** corner phase icon, loud LISTENING screen, Polish or English speech to text, screen kept awake, full screen.
-- **Characters:** sheets, QR links for phones, hit point buttons, rolls from stats and the pack's ruleset.
+- **Characters:** sheets, QR links for phones, hit point buttons.
+- **Dice:** a configurable die for the master and a place to enter real dice results.
 - **World packs:** Markdown and YAML format, `pack:check`, `pack:import`, starter characters.
 - **Assistant:** next beat, bridge scenes, creating NPCs and quests, recaps, questions about the canon, with the story log and plot state as context.
 - **Operations:** one-command setup and deploy, rate limiting, D1 migrations.
@@ -27,5 +29,4 @@
 - **Story visualization:** a timeline or graph of quests, clues, culprits and endings with progress.
 - **Gamification:** XP, achievements, faction reputation.
 - **Decisions from player phones** and per-player decisions.
-- The assistant ticking decision slots from what players said.
 - Free speech-to-text and AI backends on Workers AI.

@@ -26,52 +26,53 @@ The prompter always shows the current phase as a corner icon, so everyone knows 
 
 | Phase | Meaning |
 |---|---|
-| Listen | The master is telling the story. Scene image on the tablet. |
-| Debate | Players discuss a decision. |
+| Listen | The master is reading the story. The scene's picture is on the tablet. |
+| Interaction | The tablet asks the scene's questions. Players talk it over. |
 | Answer | The microphone is live. Players say their answer. |
-| Roll | Dice are being rolled and the result is shown. |
-| Break | Pause. |
 
-Internally there is a sixth state, review: the mic is off and the master is ticking slots. The prompter shows it as Listen because the players are just waiting. The whole flow is a pure state machine in `packages/core/src/session.ts`, so the Durable Object only stores and broadcasts state.
+Internally there is a fourth state, review: the mic is off and the master confirms what the AI understood. The prompter shows it as Listen because the players are just waiting. Roll and break phases still exist in the protocol for old clients but the console no longer starts them. The whole flow is a pure state machine in `packages/core/src/session.ts`, so the Durable Object only stores and broadcasts state.
 
 ## Microphone indicator
 
 When the mic is live the whole prompter screen must make it unmistakable, for example a full-width pulsing border and a large "LISTENING" label. This is a hard requirement.
 
-## Decisions
+## How a scene is played
 
-A decision template has a prompt and required slots, for example `who`, `where`, `what`. Different decisions have different slots.
+The story is a graph of scenes (quests and endings) written in the world pack, see [world-pack.md](world-pack.md). The master console has two tabs, **Story** and **Dashboard**. The Story tab is where the game is run.
 
-1. The master starts a decision. The prompter shows the prompt and the slots. Phase: Debate.
-2. Players talk it over. The master presses "Open the microphone". Phase: Answer.
-3. Speech recognition on the tablet produces a transcript. It appears on the master panel with the slots as a checklist.
-4. The master ticks the slots that were covered.
-5. If something is missing, "Another try" goes back to Debate and highlights the missing slots. Otherwise the master accepts and the story continues.
+1. **Pick the scene.** The Story tab lists the scenes whose requirements are met. Locked scenes are listed too, with what they wait for, and can be played anyway. Opening a scene shows its read-aloud text and puts its picture on the tablet. The master reads the text.
+2. **Start the interaction.** One button. The tablet shows the scene's prompt and its questions (who, where, how: only what the scene needs). Phase: Interaction.
+3. **Open the microphone.** The tablet listens; its transcript appears live on the laptop. Phase: Answer. The master answers the players' side questions out loud; they are not recorded.
+4. **Close the microphone.** The AI reads the transcript ([ai.md](ai.md)) and the console shows what it understood for each question, which prepared outcome fits best, and a reason.
+5. **Confirm.** One tap on the suggested outcome, or on another one, or "Ask the players again" if an answer is missing (the tablet highlights what is missing). Confirming sets the outcome's flags, which unlocks further scenes, marks the scene done in the plot, writes the log, and puts the outcome's picture on the tablet.
 
-Players decide as a group, one answer per decision. AI auto-ticking slots may come later.
+A scene without an interaction skips steps 2 to 4: its outcomes are buttons straight away. If the players leave the prepared graph, the assistant on the same screen writes a bridge back to the nearest scene or ending they can still reach.
 
-The prompter asks the browser to keep the screen on so the tablet does not fall asleep mid-session, and offers a full screen button between decisions. If the browser cannot keep the screen awake it says so; then raise the tablet's screen timeout in its settings.
+The prompter asks the browser to keep the screen on so the tablet does not fall asleep mid-session, and offers a full screen button between interactions. If the browser cannot keep the screen awake it says so; then raise the tablet's screen timeout in its settings.
 
 The tablet needs one tap per session to grant microphone permission. After that the master controls the mic from the laptop.
 
-## Dice and checks
+## Dice
 
-- The **Dice** panel rolls any `NdM` with a modifier (for example `2d6+3`) and keeps a short history. It is for the master only.
-- **Roll by stats** rolls a d20 check for a character: d20 plus the attribute, plus the skill rank for a skill, against a difficulty tier from the ruleset or a custom target, with advantage or disadvantage. The result goes to the tablet (Roll phase) and the story log.
-- A **custom d20 check** does the same with a hand-typed modifier, for when no pack or character exists.
+The **Dice** panel on the Story tab has three uses:
 
-## The master panel
+- **The master's die.** Set the number of sides (d20 by default, remembered in the browser) and press Roll.
+- **Real dice.** Players roll their own. Pick the player, type the result and press "Note it".
+- Both are written to the story log so the assistant knows what happened.
 
-| Panel | What it does |
+What a number means is up to the story: the scene's outcomes say it. There is no difficulty table to configure.
+
+## The console
+
+| Where | What it does |
 |---|---|
-| Table control | The controls that fit the current phase: scene image, decisions, checks, breaks, the microphone, review |
-| Assistant | Ask the AI for the next beat, a way back to the plot, new NPCs and quests, a recap, or canon questions. See [ai.md](ai.md) |
-| Plot | Mark quests, culprits, endings, people and places as found or done; reset for a new campaign |
-| Story so far | The log of notes, accepted decisions and rolls |
-| Party | Hit points of every character with -5, -1, +1 and +5 buttons |
-| Tablet | Pairing codes and the list of paired tablets |
-| Characters | Create, edit and delete characters, show their QR codes, add the pack's characters |
-| Dice | Free dice rolls |
+| Story tab | The current scene's text and picture, the interaction controls, outcome buttons, dice and the assistant |
+| Dashboard: Story progress | Flags that are set, scenes that are locked, forget a flag, reset for a new campaign |
+| Dashboard: Plot | Mark quests, culprits, endings, people and places as found or done |
+| Dashboard: Story so far | The log of notes, accepted decisions, scene results and rolls |
+| Dashboard: Party | Hit points of every character with -5, -1, +1 and +5 buttons |
+| Dashboard: Tablet | Pairing codes and the list of paired tablets (a one-time action) |
+| Dashboard: Characters | Create, edit and delete characters, show their QR codes, add the pack's characters |
 
 ## Realtime
 
@@ -85,4 +86,4 @@ One Durable Object (`SessionRoom`) holds the session state and talks to every de
 
 Clients send `{ "type": "event", "event": { ... } }`. The server answers every change with `{ "type": "state", "view": { ... } }` and sends each role only what it needs: the master gets the full state, the tablet gets the phase, scene, prompt and live transcript, players get the phase and scene. Errors (`forbidden`, `invalid_message`, `invalid_transition`, `invalid_missing`) go only to the sender.
 
-Who may send what: the master sends every event except `update_transcript`; the tablet sends only `update_transcript`; players send nothing.
+Who may send what: the master sends every event except `update_transcript` (including `cancel_decision`, which drops a running decision and keeps the picture); the tablet sends only `update_transcript`; players send nothing.
