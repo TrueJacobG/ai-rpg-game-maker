@@ -254,3 +254,41 @@ describe('runCli import', () => {
     expect(calls).toEqual([]);
   });
 });
+
+const scene = (requires: string) =>
+  `---\ntitle: Scene\nread_aloud: Fog.\nrequires: [${requires}]\noutcomes:\n  - { id: done, label: Done, text: Over, sets: [open] }\n---\nx`;
+
+describe('runCli story scenes', () => {
+  it('counts scenes and images', async () => {
+    const { code, output } = await run(['check', 'story'], {
+      ...goodFiles,
+      'quests/gate.md': scene(''),
+      'images/images.yaml': 'dock.jpg: A dock',
+      'images/dock.jpg': '',
+    });
+    expect(code).toBe(0);
+    expect(output).toContain('1 story scenes, 1 images');
+  });
+
+  it('warns about scenes that can never be reached but still succeeds', async () => {
+    const { code, output } = await run(['check', 'story'], {
+      ...goodFiles,
+      'quests/a.md': scene('quest/b'),
+      'quests/b.md': scene('quest/a'),
+    });
+    expect(code).toBe(0);
+    expect(output).toContain('Warning: quest/a can never become available');
+    expect(output).toContain('Warning: No ending can be reached from the start');
+  });
+
+  it('reports a requirement nothing sets with the file name', async () => {
+    const { code, output } = await run(['check', 'story'], {
+      ...goodFiles,
+      'quests/gate.md': scene('mystery_flag'),
+    });
+    expect(code).toBe(1);
+    expect(output).toContain(
+      'quests/gate.md: node.requires.0: Nothing sets the flag "mystery_flag"',
+    );
+  });
+});

@@ -23,10 +23,16 @@ describe('readDirectory', () => {
 
   it('skips hidden files and other file types', () => {
     const files = readDirectory(samplePack);
-    expect(Object.keys(files).every((name) => /\.(md|ya?ml)$/.test(name))).toBe(true);
+    expect(Object.keys(files).every((name) => /\.(md|ya?ml|png)$/.test(name))).toBe(true);
     expect(
       Object.keys(files).some((name) => name.split('/').some((part) => part.startsWith('.'))),
     ).toBe(false);
+  });
+
+  it('lists the image files of the images folder without reading them', () => {
+    const files = readDirectory(samplePack);
+    expect(files['images/dock-7.png']).toBe('');
+    expect(files['images/images.yaml']).toContain('dock-7.png');
   });
 
   it('fails clearly for a folder that does not exist', () => {

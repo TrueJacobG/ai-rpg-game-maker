@@ -17,6 +17,7 @@ const bundle: PackBundle = {
   pack: { name: 'Neon Debt', language: 'en', summary: '' },
   ruleset: testRuleset,
   world: '',
+  images: [],
   documents: [
     doc('quest', 'missing-shipment', 'The missing shipment'),
     doc('culprit', 'ghost-auditor', 'The ghost auditor'),

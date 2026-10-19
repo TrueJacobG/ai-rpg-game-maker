@@ -26,9 +26,54 @@ const frontMatterSchema = z.strictObject({
   tags: z.array(z.string()).optional(),
   secret: z.boolean().optional(),
   links: z.array(z.string()).optional(),
+  read_aloud: z.string().optional(),
+  image: z.string().optional(),
+  requires: z.array(z.string()).optional(),
+  interaction: z
+    .strictObject({
+      prompt: z.string(),
+      questions: z.array(z.strictObject({ key: z.string(), label: z.string() })),
+    })
+    .optional(),
+  outcomes: z
+    .array(
+      z.strictObject({
+        id: z.string(),
+        label: z.string(),
+        text: z.string().optional(),
+        sets: z.array(z.string()).optional(),
+        image: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
+const imageCatalogSchema = z.record(z.string(), z.string());
+
+const STORY_FIELDS = ['read_aloud', 'image', 'requires', 'interaction', 'outcomes'] as const;
+const IMAGE_FILE = /^images\/[^/]+\.(png|jpe?g|webp|gif|avif)$/i;
+
 type Document = PackBundle['documents'][number];
+type Front = z.infer<typeof frontMatterSchema>;
+
+const storyNode = (front: Front): Pick<Document, 'node'> => {
+  if (!STORY_FIELDS.some((field) => front[field] !== undefined)) return {};
+  return {
+    node: {
+      readAloud: front.read_aloud?.trim() ?? '',
+      image: front.image ?? null,
+      requires: front.requires ?? [],
+      interaction: front.interaction ?? null,
+      outcomes: (front.outcomes ?? []).map((outcome) => ({
+        id: outcome.id,
+        label: outcome.label,
+        text: outcome.text?.trim() ?? '',
+        sets: outcome.sets ?? [],
+        image: outcome.image ?? null,
+      })),
+    },
+  };
+};
 
 const normalize = (files: FileMap): FileMap =>
   Object.fromEntries(
@@ -101,6 +146,7 @@ const readDocument = (
     secret: front.data.secret ?? false,
     links: front.data.links ?? [],
     body,
+    ...storyNode(front.data),
   });
 };
 
@@ -117,6 +163,23 @@ const documentEntries = (files: FileMap) =>
 const characterEntries = (files: FileMap) =>
   sortedEntries(files).filter(([file]) => /^characters\/[^/]+\.ya?ml$/.test(file));
 
+const readImages = (files: FileMap): Result<PackBundle['images'], PackIssue[]> => {
+  const file = 'images/images.yaml';
+  if (!(file in files)) return success([]);
+  const parsed = readYaml(file, files[file] ?? '');
+  if (parsed.status === 'error') return failure([parsed.error]);
+  const catalog = parseWith(imageCatalogSchema, parsed.data ?? {});
+  if (catalog.status === 'error') {
+    return failure([{ file, message: 'Use "file name: description" lines' }]);
+  }
+  const entries = Object.entries(catalog.data);
+  const missing = entries
+    .filter(([name]) => !(`images/${name}` in files) || !IMAGE_FILE.test(`images/${name}`))
+    .map(([name]) => ({ file, message: `No image file "images/${name}" next to the description` }));
+  if (missing.length > 0) return failure(missing);
+  return success(entries.map(([name, description]) => ({ file: name, description })));
+};
+
 const requireFile = (files: FileMap, file: string): Result<string, PackIssue> =>
   file in files ? success(files[file] ?? '') : failure({ file, message: 'Missing file' });
 
@@ -129,6 +192,7 @@ const mapIssue = (issue: ParseIssue, documents: string[], characters: string[]):
   if (section === 'characters')
     return { file: characters[Number(index)] ?? 'characters', message: inner(rest) };
   if (section === 'world') return { file: 'world.md', message: issue.message };
+  if (section === 'images') return { file: 'images/images.yaml', message: inner(rest) };
   const file = section === 'ruleset' ? 'ruleset.yaml' : 'pack.yaml';
   return { file, message: inner(index === undefined ? [] : [index, ...rest]) };
 };
@@ -159,8 +223,10 @@ export const readPack = (rawFiles: FileMap): Result<PackBundle, PackIssue[]> => 
     result: readYaml(file, text),
   }));
 
+  const images = readImages(files);
+
   const issues = [
-    ...issuesOf([packInfo, ruleset]),
+    ...issuesOf([packInfo, ruleset, images]),
     ...issuesOf(documents.map((entry) => entry.result)),
     ...characters.flatMap((entry) => (entry.result.status === 'error' ? [entry.result.error] : [])),
   ];
@@ -179,6 +245,7 @@ export const readPack = (rawFiles: FileMap): Result<PackBundle, PackIssue[]> => 
     pack: info,
     ruleset: successValue(ruleset),
     world: (files['world.md'] ?? '').trim(),
+    images: successValue(images),
     documents: documentSources.map((entry) => entry.value),
     characters: characterSources.map((entry) => entry.value),
   });

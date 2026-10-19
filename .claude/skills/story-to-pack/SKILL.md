@@ -27,8 +27,9 @@ Do not try to handle every possible source format automatically. The job is a gu
 | Organisations, corporations, guilds | `factions/<slug>.md` |
 | Places | `locations/<slug>.md` |
 | History, background, mechanics of the world | `lore/<slug>.md` |
-| Missions, chapters, scenarios | `quests/<slug>.md` |
-| How the story can end | `endings/<slug>.md` |
+| Missions, chapters, scenarios | `quests/<slug>.md`, written as scenes (see step 3) |
+| How the story can end | `endings/<slug>.md`, with the requirements for reaching it |
+| Pictures, maps, scene art | `images/<file>` described in `images/images.yaml` |
 | Who is behind the mystery, and the clues pointing at them | `culprits/<slug>.md` |
 | Ready-made player characters | `characters/<slug>.yaml` (at most 20) |
 | Campaign name, language, one-line summary | `pack.yaml` |
@@ -52,22 +53,35 @@ When done, write `story/_work/outline.md`: the proposed list of documents (kind,
 ### 2. Ruleset
 The engine rolls a d20, adds one attribute and optionally one skill rank, and compares to a target. A character has hit points and nothing else (no mana, stress or other tracks). If the source uses a different system, propose the closest mapping (for example: four to six attributes, a short skill list, difficulty tiers 10, 15, 20) and say plainly what is lost. If the game master has no preference, use the sample ruleset and adapt the labels to the setting. Keys are lowercase letters, digits and `_`.
 
-### 3. Write the documents
+### 3. Design the story graph
+The story is played as a graph, not a line. Before writing quests, draw it with the game master in `story/_work/graph.md`:
+
+- **Scenes** are the quests and endings. Each has `read_aloud` text for the game master to read, and optionally an `interaction` the tablet runs with the players (a prompt and two to four short questions such as who, where, how; only the ones the scene needs).
+- **Outcomes** are what can happen in a scene (two to four). Each sets flags: facts the story remembers (`auditor_key_traced`, `mara_deal`).
+- **Requirements** (`requires`) say what must have happened before a scene is available: another scene, a particular outcome of it, a flag, or something a character has (`char:` flags, once character creation exists).
+- **Endings** are scenes that require the flags that lead to them. Make sure each ending is reachable by more than one path of decisions and that early decisions matter later.
+
+Write the graph as a list: `scene -> requires -> outcomes -> flags`. Ask the game master about every gap, but do not insist on completing everything: the AI bridges holes at the table. The more edges prepared, the better. Show the graph and get approval.
+
+### 4. Images
+For each scene and for notable outcomes, decide whether it needs a picture. Put the files in `story/images/` and describe each in `story/images/images.yaml` (`file.png: a sentence a person could use to pick it`). If the game master has no pictures, write a short image prompt per scene in `story/_work/image-prompts.md` for them to generate, and leave `image:` out until the files exist. Keep file names neutral: they are public once deployed.
+
+### 5. Write the documents
 Create the files from the approved outline. Guidelines per kind:
 - **Every document**: front matter with `title`, `tags` if useful, `secret: true` for anything the players must not learn yet, and `links`. The body is what the assistant reads.
 - **NPC**: what they want, what they hide, how they talk, who they know.
 - **Location**: what the party sees, what is hidden, which clues can be found here.
-- **Quest**: the goal, then numbered beats. Link the locations, culprits and endings it touches.
+- **Quest**: the goal, then numbered beats. Link the locations, culprits and endings it touches. Add the scene fields from step 3: `read_aloud`, `requires`, `interaction`, `outcomes`.
 - **Culprit**: who, motive, method, the clues that point at them and where each is found, how they react if confronted.
-- **Ending**: what has to be true for it to happen, and what the world looks like after.
+- **Ending**: what has to be true for it to happen (`requires`), the `read_aloud` epilogue, and what the world looks like after.
 - **Faction and lore**: only what changes how the party plays. Cut flavour that will never matter.
 
 Keep bodies short and concrete. **The whole pack is sent to the AI with every question**, so size is cost: aim for under about 150 000 characters in total (roughly 40 000 tokens). The hard limits are 500 documents, 50 000 characters each, 1.5 MB in total.
 
-### 4. Characters
+### 6. Characters
 If the source has ready characters, write `characters/<slug>.yaml`. Attributes and skills must use keys that exist in `ruleset.yaml`. Put what only the player may know under `secrets`.
 
-### 5. Validate and fix
+### 7. Validate and fix
 ```bash
 npm run pack:check -- story
 ```
@@ -80,18 +94,22 @@ Fix every problem it prints, then run it again until it says `OK`. Common ones:
 | `Unknown document "kind/slug"` | A link points at a document that does not exist: fix the slug or create the document |
 | `Unknown attribute` / `Unknown skill` | A skill refers to a missing attribute, or a character uses a key the ruleset does not define |
 | `Duplicate key` | Two attributes, skills or difficulties share a key |
-| Unrecognized key | A typo in front matter (`secert:`); allowed keys are `title`, `tags`, `secret`, `links` |
+| `Nothing sets the flag "x"` | A `requires` entry that no outcome sets: fix the spelling or add it to an outcome's `sets` |
+| `is not described in images/images.yaml` / `No image file` | The image name does not match a described file in `images/` |
+| Unrecognized key | A typo in front matter (`secert:`); allowed keys are `title`, `tags`, `secret`, `links`, `read_aloud`, `image`, `requires`, `interaction`, `outcomes` |
 
-### 6. Review with the game master
+### 8. Review with the game master
 Before importing, check these and report what you find:
+- `npm run pack:check` prints no warnings: every scene can become available and at least one ending is reachable.
 - Every quest is linked to at least one ending, and every ending to the culprit or NPC it depends on.
+- Decisions matter: at least two endings, reached by different flags.
 - Every culprit has at least one clue, and each clue lives in a location or NPC that is itself reachable from a quest.
 - Nothing important is a dead end: documents that nothing links to should be there on purpose.
 - Secrets are marked, and nothing marked secret is also in `world.md`.
 - Total size is reasonable, and the language is consistent.
 - Your open questions are answered or written into the documents.
 
-### 7. Hand over
+### 9. Hand over
 Tell the game master to run the import themselves (it asks for the master password):
 ```bash
 npm run pack:import -- story --url https://<their address>

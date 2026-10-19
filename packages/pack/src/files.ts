@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { FileMap } from './read';
 
 const READABLE = /\.(md|ya?ml)$/;
+const IMAGE = /\.(png|jpe?g|webp|gif|avif)$/i;
 
 const walk = (root: string, folder: string, files: FileMap): void => {
   for (const entry of readdirSync(path.join(root, folder), { withFileTypes: true })) {
@@ -11,6 +12,7 @@ const walk = (root: string, folder: string, files: FileMap): void => {
     if (entry.isDirectory()) walk(root, relative, files);
     else if (READABLE.test(entry.name))
       files[relative] = readFileSync(path.join(root, relative), 'utf8');
+    else if (folder === 'images' && IMAGE.test(entry.name)) files[relative] = '';
   }
 };
 

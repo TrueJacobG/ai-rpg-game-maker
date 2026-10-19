@@ -1,4 +1,5 @@
 import type { PackBundle } from '@ai-rpg/core/pack';
+import { playableDocuments, storyWarnings } from '@ai-rpg/core/story';
 import type { FileMap } from './read';
 import { readPack } from './read';
 
@@ -49,7 +50,10 @@ const loadBundle = (directory: string, io: CliIo): PackBundle | null => {
   }
 
   const result = readPack(files);
-  if (result.status === 'success') return result.data;
+  if (result.status === 'success') {
+    for (const warning of storyWarnings(result.data)) io.print(`Warning: ${warning}`);
+    return result.data;
+  }
 
   for (const issue of result.error) io.print(`${issue.file}: ${issue.message}`);
   const count = result.error.length;
@@ -57,9 +61,15 @@ const loadBundle = (directory: string, io: CliIo): PackBundle | null => {
   return null;
 };
 
-const describePack = ({ pack, documents, characters, ruleset }: PackBundle): string =>
-  `${pack.name} (${pack.language}): ${documents.length} documents, ${characters.length} characters, ` +
-  `${ruleset.attributes.length} attributes, ${ruleset.skills.length} skills`;
+const describePack = (bundle: PackBundle): string => {
+  const { pack, documents, characters, ruleset, images } = bundle;
+  const story = playableDocuments(bundle).length;
+  return (
+    `${pack.name} (${pack.language}): ${documents.length} documents, ${characters.length} characters, ` +
+    `${ruleset.attributes.length} attributes, ${ruleset.skills.length} skills, ` +
+    `${story} story scenes, ${images.length} images`
+  );
+};
 
 const check = (directory: string, io: CliIo): number => {
   const bundle = loadBundle(directory, io);
