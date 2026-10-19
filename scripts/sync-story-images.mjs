@@ -17,7 +17,11 @@ export const syncStoryImages = ({ sources, target }) => {
 if (import.meta.main) {
   const root = path.resolve(import.meta.dirname, '..');
   const { copied, source } = syncStoryImages({
-    sources: [path.join(root, 'story/images'), path.join(root, 'examples/sample-pack/images')],
+    sources: [
+      ...(process.env.STORY_IMAGES ? [path.resolve(root, process.env.STORY_IMAGES)] : []),
+      path.join(root, 'story/images'),
+      path.join(root, 'examples/sample-pack/images'),
+    ],
     target: path.join(root, 'apps/web/public/story-images'),
   });
   const where = source ? path.relative(root, source) : 'nowhere';

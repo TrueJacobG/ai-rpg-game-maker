@@ -1,0 +1,8 @@
+attributes:
+  - { key: body, label: Body }
+  - { key: mind, label: Mind }
+  - { key: nerve, label: Nerve }
+skills: []
+difficulties:
+  - { key: routine, label: Routine, target: 10 }
+  - { key: hard, label: Hard, target: 15 }

@@ -30,7 +30,7 @@ npm install
 npm run deploy
 ```
 
-This copies your story pictures (`story/images/`, or the sample pack's when you have none) into the site, builds the web app and deploys the Worker with its Durable Object. Run `npm run deploy` again whenever you change a picture; changing text only needs `npm run pack:import`. On the first deploy Wrangler creates the D1 database named in `apps/worker/wrangler.jsonc` and writes its id into that file. The id is not secret, but it belongs to your account. Git will now show the file as modified. To keep it out of your commits and let `git pull` and rebases work:
+This copies your story pictures (`story/images/`, or the sample pack's when you have none) into the site, builds the web app and deploys the Worker with its Durable Object. To use the pictures of another pack, for example `STORY_IMAGES=examples/playtest-pack/images npm run deploy`. Run `npm run deploy` again whenever you change a picture; changing text only needs `npm run pack:import`. On the first deploy Wrangler creates the D1 database named in `apps/worker/wrangler.jsonc` and writes its id into that file. The id is not secret, but it belongs to your account. Git will now show the file as modified. To keep it out of your commits and let `git pull` and rebases work:
 
 ```bash
 git update-index --skip-worktree apps/worker/wrangler.jsonc
