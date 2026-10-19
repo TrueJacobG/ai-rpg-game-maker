@@ -32,6 +32,7 @@ Do not try to handle every possible source format automatically. The job is a gu
 | Pictures, maps, scene art | `images/<file>` described in `images/images.yaml` |
 | Who is behind the mystery, and the clues pointing at them | `culprits/<slug>.md` |
 | Ready-made player characters | `characters/<slug>.yaml` (at most 20) |
+| How new characters can be introduced during play: origins, skills, gear | `creation.yaml` (see step 6) |
 | Campaign name, language, one-line summary | `pack.yaml` |
 
 The plot is not a separate format. It is the **links** between documents (`links: [kind/slug]`): a quest links to the locations, culprits and endings it can lead to; a culprit links to where the clues are; an ending links to the culprit or NPC it depends on. The assistant follows these links to steer the players back to the prepared story, so wiring them well matters more than perfect prose.
@@ -58,7 +59,7 @@ The story is played as a graph, not a line. Before writing quests, draw it with 
 
 - **Scenes** are the quests and endings. Each has `read_aloud` text for the game master to read, and optionally an `interaction` the tablet runs with the players (a prompt and two to four short questions such as who, where, how; only the ones the scene needs).
 - **Outcomes** are what can happen in a scene (two to four). Each sets flags: facts the story remembers (`auditor_key_traced`, `mara_deal`).
-- **Requirements** (`requires`) say what must have happened before a scene is available: another scene, a particular outcome of it, a flag, or something a character has (`char:` flags, once character creation exists).
+- **Requirements** (`requires`) say what must have happened before a scene is available: another scene, a particular outcome of it, a flag, or something a character chose at creation (`char:` flags, see step 6).
 - **Endings** are scenes that require the flags that lead to them. Make sure each ending is reachable by more than one path of decisions and that early decisions matter later.
 
 Write the graph as a list: `scene -> requires -> outcomes -> flags`. Ask the game master about every gap, but do not insist on completing everything: the AI bridges holes at the table. The more edges prepared, the better. Show the graph and get approval.
@@ -79,7 +80,12 @@ Create the files from the approved outline. Guidelines per kind:
 Keep bodies short and concrete. **The whole pack is sent to the AI with every question**, so size is cost: aim for under about 150 000 characters in total (roughly 40 000 tokens). The hard limits are 500 documents, 50 000 characters each, 1.5 MB in total.
 
 ### 6. Characters
-If the source has ready characters, write `characters/<slug>.yaml`. Attributes and skills must use keys that exist in `ruleset.yaml`. Put what only the player may know under `secrets`.
+Ask the game master whether characters are made at the table or prepared.
+
+- **Prepared:** write `characters/<slug>.yaml`. Attributes and skills must use keys that exist in `ruleset.yaml`. Put what only the player may know under `secrets`.
+- **Made at the table (the usual choice):** write `creation.yaml` as described in `docs/world-pack.md`. Design it from the source: which origins, backgrounds, skills and equipment exist in this world, which are better or worse, and how a die roll should open better options without removing the player's choice. Use two to four steps after the name: origin, skills, gear. Give each step an offer for every roll, with two or three options in each band. Options grant attribute and skill points, items, abilities or flags. Think about which choices the story should remember: a scene can require `char:<option>`, so someone who started with a keycard can open a door others cannot. Write one or two such scenes.
+
+Characters created in play get their QR code at the end, so nothing needs to be prepared for them.
 
 ### 7. Validate and fix
 ```bash
@@ -96,6 +102,7 @@ Fix every problem it prints, then run it again until it says `OK`. Common ones:
 | `Duplicate key` | Two attributes, skills or difficulties share a key |
 | `Nothing sets the flag "x"` | A `requires` entry that no outcome sets: fix the spelling or add it to an outcome's `sets` |
 | `is not described in images/images.yaml` / `No image file` | The image name does not match a described file in `images/` |
+| `Every roll from 1 to 6 needs exactly one offer` | A creation step's `offers` leave a roll uncovered or cover it twice |
 | Unrecognized key | A typo in front matter (`secert:`); allowed keys are `title`, `tags`, `secret`, `links`, `read_aloud`, `image`, `requires`, `interaction`, `outcomes` |
 
 ### 8. Review with the game master

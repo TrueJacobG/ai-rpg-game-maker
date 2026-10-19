@@ -84,6 +84,7 @@ describe('story routes require a session', () => {
     ['GET', '/api/master/story'],
     ['PUT', '/api/master/story/current'],
     ['POST', '/api/master/story/resolve'],
+    ['POST', '/api/master/story/flags'],
     ['PUT', '/api/master/story/flags/x'],
     ['DELETE', '/api/master/story/flags/x'],
     ['DELETE', '/api/master/story'],
@@ -224,6 +225,25 @@ describe('flags and reset', () => {
       204,
     );
     expect((await read(cookie)).flags).toEqual([]);
+  });
+
+  it('sets several flags at once', async () => {
+    const cookie = await login();
+    await importPack(cookie);
+    const response = await call('POST', '/api/master/story/flags', {
+      cookie,
+      body: { flags: ['char:pistol', 'char:from_docks'] },
+    });
+    expect(response.status).toBe(204);
+    expect((await read(cookie)).flags).toEqual(['char:from_docks', 'char:pistol']);
+  });
+
+  it('refuses an empty or malformed list of flags', async () => {
+    const cookie = await login();
+    const post = (body: unknown) => call('POST', '/api/master/story/flags', { cookie, body });
+    expect((await post({ flags: [] })).status).toBe(400);
+    expect((await post({ flags: ['Bad Flag'] })).status).toBe(400);
+    expect((await post({})).status).toBe(400);
   });
 
   it('accepts a scene reference flag with a slash and a hash', async () => {

@@ -38,7 +38,7 @@ describe('parsePackBundle', () => {
   it('accepts a complete bundle', () => {
     expect(parsePackBundle(bundle())).toEqual({
       status: 'success',
-      data: { ...bundle(), images: [] },
+      data: { ...bundle(), images: [], creation: null },
     });
   });
 
@@ -185,6 +185,30 @@ describe('parsePackBundle', () => {
   });
 });
 
+const creation = {
+  hp: 10,
+  steps: [
+    { key: 'name', kind: 'name', prompt: 'Who is it?' },
+    {
+      key: 'origin',
+      kind: 'offer',
+      prompt: 'Where from?',
+      die: 2,
+      offers: [
+        { roll: [1, 1], options: ['keycard'] },
+        { roll: [2, 2], options: ['dock_rat'] },
+      ],
+    },
+  ],
+  options: {
+    keycard: {
+      label: 'Keycard',
+      grants: { items: [{ name: 'Keycard', description: '', tags: [] }] },
+    },
+    dock_rat: { label: 'Dock rat', grants: { attributes: { body: 1 }, flags: ['from_docks'] } },
+  },
+};
+
 const playable = (overrides: Record<string, unknown> = {}) => ({
   readAloud: 'The vault is open.',
   image: null,
@@ -209,11 +233,21 @@ describe('story nodes', () => {
   it('accepts requirements on outcomes, flags and the quests themselves', () => {
     const documents = [
       quest('gate', { outcomes }),
-      quest('vault', {
-        requires: ['quest/gate', 'quest/gate#bribe', 'dock_open', 'char:item_keycard'],
-      }),
+      quest('vault', { requires: ['quest/gate', 'quest/gate#bribe', 'dock_open'] }),
     ];
     expect(parsePackBundle(bundle({ documents })).status).toBe('success');
+  });
+
+  it('accepts a requirement on something a character picked at creation', () => {
+    const documents = [quest('vault', { requires: ['char:keycard', 'char:from_docks'] })];
+    expect(parsePackBundle(bundle({ documents, creation })).status).toBe('success');
+  });
+
+  it('rejects a character requirement when creation does not offer it', () => {
+    const documents = [quest('vault', { requires: ['char:keycard'] })];
+    expect(nodeIssues(documents)).toEqual([
+      'documents.0.node.requires.0: Nothing sets the flag "char:keycard"',
+    ]);
   });
 
   it('adds an empty image catalog when none is given', () => {
@@ -277,5 +311,28 @@ describe('story nodes', () => {
     ];
     expect(nodeIssues([], images)).toEqual(['images.1.file: Duplicate image "dock.jpg"']);
     expect(nodeIssues([], [{ file: 'dock.exe', description: 'x' }])).toHaveLength(1);
+  });
+});
+
+describe('character creation in a pack', () => {
+  it('reports attributes and skills the ruleset does not know', () => {
+    const broken = {
+      ...creation,
+      options: {
+        ...creation.options,
+        dock_rat: { label: 'Dock rat', grants: { attributes: { luck: 1 }, skills: { magic: 1 } } },
+      },
+    };
+    const messages = issuesOf(bundle({ creation: broken })).map((i) => `${i.path}: ${i.message}`);
+    expect(messages).toEqual([
+      'creation.options.dock_rat.grants.attributes.luck: Unknown attribute "luck"',
+      'creation.options.dock_rat.grants.skills.magic: Unknown skill "magic"',
+    ]);
+  });
+
+  it('reports offers that name unknown options', () => {
+    const broken = JSON.parse(JSON.stringify(creation));
+    broken.steps[1].offers[0].options = ['ghost'];
+    expect(issuesOf(bundle({ creation: broken }))[0]?.message).toBe('Unknown option "ghost"');
   });
 });

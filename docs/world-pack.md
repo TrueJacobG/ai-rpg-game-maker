@@ -11,6 +11,7 @@ story/
   pack.yaml              required: name, language, summary
   ruleset.yaml           required: attributes, skills, difficulties
   world.md               optional: the premise, always known to the AI
+  creation.yaml          optional: how new characters are made during play
   characters/<slug>.yaml starter player characters
   npcs/<slug>.md
   factions/<slug>.md
@@ -86,7 +87,7 @@ Notes for the game master, as in any document.
 - `quest/ghost-trail#trusted`: that result was chosen.
 - every flag in the result's `sets`: a fact such as `records_to_tomas`, or a decision a player made.
 
-`requires` lists flags. A scene is available when all of them are set. Requirements can mean "this quest happened", "it ended this way", "the players learned this" or, after character creation, "someone has this item or skill" (`char:` flags). An ending is a scene with `requires` and no outcomes.
+`requires` lists flags. A scene is available when all of them are set. Requirements can mean "this quest happened", "it ended this way", "the players learned this" or "someone chose this at character creation" (`char:` flags, see below). An ending is a scene with `requires` and no outcomes.
 
 - Only `quest` and `ending` documents can be scenes. Everything else stays reference material for the AI.
 - `interaction` is optional. A scene without it has no tablet question: the game master reads it and picks the result.
@@ -104,6 +105,47 @@ vault.png: The sealed vault door, glowing red
 ```
 
 A scene or result names a file as its `image`; the tablet shows it when the scene starts. The AI also reads the descriptions and may suggest a better picture when it interprets what the players decided. Create the images before you deploy, with any tool you like, or let Claude Code write prompts for an image generator. Pictures are copied to the site when you run `npm run deploy` and are served from `/story-images/`, so they are public to anyone who knows the file name: do not put spoilers in the file names.
+
+## creation.yaml: making characters during play
+
+Characters do not have to be prepared. When the story reaches a new person, the game master introduces them at the table: a player says who they are, a die decides what they are offered, and the player chooses. `creation.yaml` defines those steps and what each choice gives. Without it the Story tab has no "New character" panel, and starter characters still work as before.
+
+```yaml
+hp: 10                        # hit points before any bonuses
+steps:
+  - key: name
+    kind: name                # the tablet asks; the AI writes down the name and a short description
+    prompt: Someone steps out of the rain. Who are they?
+  - key: origin
+    kind: offer               # a die roll decides what is offered
+    prompt: Where does this person come from?
+    die: 6
+    offers:                   # every roll from 1 to the die must appear exactly once
+      - { roll: [1, 2], options: [dock_rat, courier] }
+      - { roll: [3, 4], options: [dock_rat, courier, fixer] }
+      - { roll: [5, 6], options: [courier, fixer, ex_auditor] }
+options:
+  dock_rat:
+    label: Dock rat
+    text: Grew up on the flooded piers.
+    grants:
+      attributes: { body: 1 }       # added to the character's attributes
+      skills: { firearms: 1 }
+      hp: 2                         # added to hit points
+      items:      [{ name: Pipe wrench, description: Heavy, tags: [weapon] }]
+      abilities:  [{ name: Pier sense, description: Knows every shortcut on Dock 7 }]
+      flags: [knows_the_docks]      # extra facts for the story to remember
+```
+
+How it plays: the game master presses "Introduce a character", the tablet asks the first step, the players answer by speaking, and the name and description are filled in (the game master can fix them). For each offer step the game master rolls the die, or types in what a player rolled on a real one; the options for that roll appear. The player decides, or lets fate choose at random. Better rolls can open better options, but the choice is the player's. At the end the character is created with its QR code.
+
+Every choice sets a flag the story can use. Picking `dock_rat` sets `char:dock_rat`, and each entry in `flags` sets `char:<flag>`. Scenes can require them:
+
+```yaml
+requires: [char:auditor_key]   # only available when someone started with the old auditor key
+```
+
+The check reports offers for unknown options, rolls that are not covered exactly once, attributes or skills the ruleset does not have, and `char:` requirements nothing grants. Exactly one step must be of kind `name`; there can be at most 10 steps.
 
 ## characters/<slug>.yaml
 

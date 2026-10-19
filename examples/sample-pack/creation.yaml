@@ -1,0 +1,72 @@
+hp: 10
+steps:
+  - key: name
+    kind: name
+    prompt: Someone steps out of the rain. Who are they, and what are they called?
+  - key: origin
+    kind: offer
+    prompt: Where does this person come from? Roll the die, then choose one of what you are offered.
+    die: 6
+    offers:
+      - { roll: [1, 2], options: [dock_rat, courier] }
+      - { roll: [3, 4], options: [dock_rat, courier, fixer] }
+      - { roll: [5, 6], options: [courier, fixer, ex_auditor] }
+  - key: gear
+    kind: offer
+    prompt: What do they carry? A better roll opens better gear.
+    die: 6
+    offers:
+      - { roll: [1, 3], options: [rust_pistol, repair_kit] }
+      - { roll: [4, 5], options: [pulse_pistol, repair_kit, signal_jammer] }
+      - { roll: [6, 6], options: [pulse_pistol, signal_jammer, auditor_key] }
+options:
+  dock_rat:
+    label: Dock rat
+    text: Grew up on the flooded piers. Tough, and everyone on Dock 7 knows them.
+    grants: { attributes: { body: 1 }, skills: { firearms: 1 }, hp: 2, flags: [knows_the_docks] }
+  courier:
+    label: Courier
+    text: Moves fast and knows the back alleys.
+    grants: { attributes: { reflex: 2 } }
+  fixer:
+    label: Fixer
+    text: Knows a person for every problem.
+    grants: { attributes: { presence: 2 } }
+  ex_auditor:
+    label: Former Helix auditor
+    text: Left the corporation under a cloud. Reads forged records at a glance.
+    grants:
+      attributes: { mind: 2 }
+      abilities:
+        - { name: Audit eye, description: Spot a forged record or a falsified registry entry }
+      flags: [knows_helix]
+  rust_pistol:
+    label: Rusty pistol
+    text: Old, loud, and it jams.
+    grants:
+      items:
+        - { name: Rusty pistol, description: Jams on a natural 1, tags: [weapon] }
+  pulse_pistol:
+    label: Pulse pistol
+    text: Corporate issue and reliable.
+    grants:
+      items:
+        - { name: Pulse pistol, description: Corporate sidearm, tags: [weapon] }
+  repair_kit:
+    label: Repair kit
+    text: Keeps gear and people running.
+    grants:
+      items:
+        - { name: Repair kit, description: Fixes a broken device in one scene, tags: [tool] }
+  signal_jammer:
+    label: Signal jammer
+    text: Blinds cameras and drones for a short while.
+    grants:
+      items:
+        - { name: Signal jammer, description: Blocks scanners for one scene, tags: [tool] }
+  auditor_key:
+    label: Old auditor key
+    text: A relic that still opens some Helix doors.
+    grants:
+      items:
+        - { name: Old auditor key, description: Opens Helix vaults that have not changed their locks, tags: [key] }

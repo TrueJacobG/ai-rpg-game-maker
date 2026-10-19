@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AssistantPanel } from './AssistantPanel';
 import { setCurrentScene } from './api';
+import { CreationPanel } from './CreationPanel';
 import { DiceBar } from './DiceBar';
 import { describeApiError } from './errors';
 import type { MasterRoom } from './room';
@@ -73,6 +74,7 @@ export const StoryScreen = ({ room }: { room: MasterRoom }) => {
       </div>
       <aside className="story-side">
         <DiceBar />
+        <CreationPanel room={room} />
         <AssistantPanel />
       </aside>
     </div>

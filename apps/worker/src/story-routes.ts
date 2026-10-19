@@ -15,6 +15,7 @@ import { createStoryRepository } from './story-repository';
 
 const refSchema = z.string().min(1).max(200);
 const currentSchema = z.strictObject({ ref: refSchema.nullable() });
+const flagsSchema = z.strictObject({ flags: z.array(flagSchema).min(1).max(50) });
 const resolveSchema = z.strictObject({ ref: refSchema, outcome: keySchema.nullable() });
 
 const SMALL_BODY = bodyLimit({
@@ -77,6 +78,13 @@ export const createStoryRoutes = ({ now }: AppDependencies) => {
       return c.json(await view(c.env.DB, bundle));
     }),
   );
+
+  routes.post('/flags', SMALL_BODY, async (c) => {
+    const body = flagsSchema.safeParse(await readJson(c));
+    if (!body.success) return problem(400, 'Invalid flags');
+    await createStoryRepository(c.env.DB).addFlags(body.data.flags, now());
+    return c.body(null, 204);
+  });
 
   routes.put('/flags/:flag', async (c) => {
     const flag = flagSchema.safeParse(c.req.param('flag'));

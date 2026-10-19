@@ -367,3 +367,53 @@ describe('readPack story scenes', () => {
     expect(issuesOf(files)[0]?.file).toBe('quests/gate.md');
   });
 });
+
+const creationYaml = `
+steps:
+  - { key: name, kind: name, prompt: Who is it? }
+  - key: gear
+    kind: offer
+    prompt: What do they carry?
+    die: 2
+    offers:
+      - { roll: [1, 1], options: [rust] }
+      - { roll: [2, 2], options: [pulse] }
+options:
+  rust: { label: Rusty pistol }
+  pulse: { label: Pulse pistol, grants: { attributes: { body: 1 } } }
+`;
+
+describe('readPack character creation', () => {
+  it('reads creation.yaml next to the ruleset', () => {
+    const result = readPack(withFiles({ 'creation.yaml': creationYaml }));
+    expect(result).toMatchObject({
+      status: 'success',
+      data: { creation: { hp: 10, steps: [{ key: 'name' }, { key: 'gear', die: 2 }] } },
+    });
+  });
+
+  it('has no creation without the file', () => {
+    expect(readPack(baseFiles())).toMatchObject({ status: 'success', data: { creation: null } });
+  });
+
+  it('names creation.yaml for a problem inside it', () => {
+    const broken = creationYaml.replace('options: [pulse]', 'options: [ghost]');
+    expect(issuesOf(withFiles({ 'creation.yaml': broken }))).toEqual([
+      { file: 'creation.yaml', message: 'steps.1.offers.1.options.0: Unknown option "ghost"' },
+    ]);
+  });
+
+  it('names creation.yaml for a stat the ruleset lacks', () => {
+    const broken = creationYaml.replace('body: 1', 'luck: 1');
+    expect(issuesOf(withFiles({ 'creation.yaml': broken }))[0]).toEqual({
+      file: 'creation.yaml',
+      message: 'options.pulse.grants.attributes.luck: Unknown attribute "luck"',
+    });
+  });
+
+  it('reports invalid YAML in creation.yaml', () => {
+    const issues = issuesOf(withFiles({ 'creation.yaml': 'steps: [' }));
+    expect(issues[0]?.file).toBe('creation.yaml');
+    expect(issues[0]?.message).toContain('Invalid YAML');
+  });
+});

@@ -18,6 +18,7 @@ const bundle: PackBundle = {
   ruleset: testRuleset,
   world: '',
   images: [],
+  creation: null,
   documents: [
     doc('quest', 'missing-shipment', 'The missing shipment'),
     doc('culprit', 'ghost-auditor', 'The ghost auditor'),

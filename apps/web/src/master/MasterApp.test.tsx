@@ -23,6 +23,7 @@ beforeEach(() => {
     http.get('/api/master/pack/documents', () => new HttpResponse(null, { status: 404 })),
     http.get('/api/master/plot', () => HttpResponse.json({})),
     http.get('/api/master/story', () => HttpResponse.json(emptyStory)),
+    http.get('/api/master/pack/creation', () => new HttpResponse(null, { status: 404 })),
   );
 });
 

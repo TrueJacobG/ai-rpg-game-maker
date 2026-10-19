@@ -43,7 +43,7 @@ const outcome = (id: string, sets: string[] = [], image: string | null = null) =
   image,
 });
 
-const build = (documents: unknown[]): PackBundle => {
+const build = (documents: unknown[], creation: unknown = null): PackBundle => {
   const parsed = parsePackBundle({
     pack: { name: 'Neon', language: 'en', summary: '' },
     ruleset: testRuleset,
@@ -51,6 +51,7 @@ const build = (documents: unknown[]): PackBundle => {
     images: [{ file: 'dock.jpg', description: 'A foggy dock' }],
     documents,
     characters: [],
+    creation,
   });
   if (parsed.status === 'error') throw new Error(JSON.stringify(parsed.error));
   return parsed.data;
@@ -185,7 +186,20 @@ describe('storyWarnings', () => {
   });
 
   it('treats creation flags as obtainable', () => {
-    const bundle = build([doc('quest', 'a', { requires: ['char:item_keycard'] })]);
+    const creation = {
+      steps: [
+        { key: 'name', kind: 'name', prompt: 'Who?' },
+        {
+          key: 'gear',
+          kind: 'offer',
+          prompt: 'What?',
+          die: 2,
+          offers: [{ roll: [1, 2], options: ['keycard'] }],
+        },
+      ],
+      options: { keycard: { label: 'Keycard' } },
+    };
+    const bundle = build([doc('quest', 'a', { requires: ['char:keycard'] })], creation);
     expect(storyWarnings(bundle)).toEqual(['No ending can be reached from the start']);
   });
 

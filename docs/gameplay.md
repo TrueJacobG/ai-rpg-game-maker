@@ -52,6 +52,10 @@ The prompter asks the browser to keep the screen on so the tablet does not fall 
 
 The tablet needs one tap per session to grant microphone permission. After that the master controls the mic from the laptop.
 
+## Introducing characters
+
+If the pack has a `creation.yaml` the Story tab shows a **New character** panel. The game master presses "Introduce a character" and the steps run: the tablet asks the name question and listens (the AI fills in the name and a short description, which can be corrected), then for each offer step a die is rolled (virtual, or a real roll typed in) and the options for that roll are offered. The player chooses, or lets fate choose. At the end the character is created, its flags are set so scenes can react to its choices, a line is added to the story log, and its QR code is shown. See [world-pack.md](world-pack.md).
+
 ## Dice
 
 The **Dice** panel on the Story tab has three uses:

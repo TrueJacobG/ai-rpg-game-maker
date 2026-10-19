@@ -18,6 +18,7 @@
     "./log": "./src/log.ts",
     "./plot": "./src/plot.ts",
     "./story": "./src/story.ts",
+    "./creation": "./src/creation.ts",
     "./node": "./src/node.ts"
   },
   "scripts": {

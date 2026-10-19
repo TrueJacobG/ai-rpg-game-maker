@@ -23,6 +23,7 @@ import {
   type StoredCharacter,
 } from '@ai-rpg/core/api';
 import type { Character } from '@ai-rpg/core/character';
+import { type CreationResponse, parseCreationResponse } from '@ai-rpg/core/creation';
 import type { PlotStatus } from '@ai-rpg/core/plot';
 import { failure, type Result, success } from '@ai-rpg/core/result';
 import { parseRuleset, type Ruleset } from '@ai-rpg/core/ruleset';
@@ -191,3 +192,9 @@ export const removeFlag = (flag: string): Promise<ApiResult<undefined>> =>
 
 export const resetStory = (): Promise<ApiResult<undefined>> =>
   readNothing('DELETE', '/api/master/story');
+
+export const getCreation = (): Promise<ApiResult<CreationResponse>> =>
+  readJson('GET', '/api/master/pack/creation', parseCreationResponse);
+
+export const setFlags = (flags: string[]): Promise<ApiResult<undefined>> =>
+  readNothing('POST', '/api/master/story/flags', { flags });
