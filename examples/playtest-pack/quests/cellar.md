@@ -3,6 +3,7 @@ title: The cellar
 tags: [clue]
 links: [npc/maren-tolk]
 requires: [inside]
+image: cellar.png
 read_aloud: |
   The cellar door is bolted from below. You hear breathing and the scrape of a chair.
 interaction:

@@ -16,9 +16,11 @@ outcomes:
     label: They light the cracked lamp
     text: The beam is weak and scattered, but it reaches the sea.
     sets: [lighthouse_lit]
+    image: beam.png
   - id: smash_it
     label: They destroy the lamp and leave the light dark
     text: The glass shatters across the floor. The sea goes black.
     sets: [lamp_broken]
+    image: dark.png
 ---
 The decision that picks the ending.
